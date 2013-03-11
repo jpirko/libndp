@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libndp
+Description: Neighbour discovery library.
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lndp
+Cflags: -I${includedir}/ndp.h
