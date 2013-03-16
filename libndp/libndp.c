@@ -1062,7 +1062,6 @@ static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);
 
 static int ndp_sock_recv(struct ndp *ndp)
 {
-	uint32_t ifindex = ifindex;
 	struct ndp_msg *msg;
 	enum ndp_msg_type msg_type;
 	size_t len = sizeof(msg->buf);
@@ -1072,15 +1071,15 @@ static int ndp_sock_recv(struct ndp *ndp)
 	if (!msg)
 		return -ENOMEM;
 
-	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0, &msg->addrto, &ifindex);
+	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0,
+			  &msg->addrto, &msg->ifindex);
 	if (err) {
 		err(ndp, "Failed to receive message");
 		goto free_msg;
 	}
 	dbg(ndp, "rcvd from: %s, ifindex: %u",
-		 str_in6_addr(&msg->addrto), ifindex);
+		 str_in6_addr(&msg->addrto), msg->ifindex);
 
-	msg->ifindex = ifindex;
 	ndp_msg_payload_len_set(msg, len);
 
 	if (len < sizeof(*msg->icmp6_hdr)) {
