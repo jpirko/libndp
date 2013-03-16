@@ -675,6 +675,8 @@ struct ndp_msg {
 };
 
 struct ndp_msg_type_info {
+#define NDP_STRABBR_SIZE 4
+	char strabbr[NDP_STRABBR_SIZE];
 	uint8_t raw_type;
 	size_t raw_struct_size;
 };
@@ -682,22 +684,27 @@ struct ndp_msg_type_info {
 static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 {
 	[NDP_MSG_RS] = {
+		.strabbr = "RS",
 		.raw_type = ND_ROUTER_SOLICIT,
 		.raw_struct_size = sizeof(struct nd_router_solicit),
 	},
 	[NDP_MSG_RA] = {
+		.strabbr = "RA",
 		.raw_type = ND_ROUTER_ADVERT,
 		.raw_struct_size = sizeof(struct nd_router_advert),
 	},
 	[NDP_MSG_NS] = {
+		.strabbr = "NS",
 		.raw_type = ND_NEIGHBOR_SOLICIT,
 		.raw_struct_size = sizeof(struct nd_neighbor_solicit),
 	},
 	[NDP_MSG_NA] = {
+		.strabbr = "NA",
 		.raw_type = ND_NEIGHBOR_ADVERT,
 		.raw_struct_size = sizeof(struct nd_neighbor_advert),
 	},
 	[NDP_MSG_R] = {
+		.strabbr = "R",
 		.raw_type = ND_REDIRECT,
 		.raw_struct_size = sizeof(struct nd_redirect),
 	},
@@ -969,29 +976,18 @@ uint32_t ndp_msg_ifindex(struct ndp_msg *msg)
 	return msg->ifindex;
 }
 
-static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);
-
-static int ndp_process_rs(struct ndp *ndp, struct ndp_msg *msg)
-{
-	//struct ndp_msgrs msgrs = ndp_msgrs(msg);
-	size_t len = ndp_msg_payload_len(msg);
-
-	dbg(ndp, "rcvd RS, len: %luB", len);
-	return ndp_call_handlers(ndp, msg);;
-}
-
-static int ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
-			      uint8_t opt_type, uint8_t opt_len)
+static void ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
+			       uint8_t opt_type, uint8_t opt_len)
 {
 	if (opt_type == ND_OPT_SOURCE_LINKADDR) {
 		if (opt_len != 8)
-			return 0; /* unsupported address length */
+			return; /* unsupported address length */
 		memcpy(msgra->opt_source_linkaddr.addr, &opt_data[2],
 		       sizeof(msgra->opt_source_linkaddr));
 		msgra->opt_source_linkaddr.present = true;
 	} else if (opt_type == ND_OPT_TARGET_LINKADDR) {
 		if (opt_len != 8)
-			return 0; /* unsupported address length */
+			return; /* unsupported address length */
 		memcpy(msgra->opt_target_linkaddr.addr, &opt_data[2],
 		       sizeof(msgra->opt_target_linkaddr));
 		msgra->opt_target_linkaddr.present = true;
@@ -1018,63 +1014,31 @@ static int ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
 		msgra->opt_mtu.mtu = ntohl(mtu->nd_opt_mtu_mtu);
 		msgra->opt_mtu.present = true;
 	}
-	return 0;
 }
 
-static int ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
+static void ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
 {
 	struct ndp_msgra *msgra = ndp_msgra(msg);
 	size_t len = ndp_msg_payload_len(msg);
 	unsigned char *ptr;
 
-	dbg(ndp, "rcvd RA, len: %luB", len);
 	msgra->ra = ndp_msg_payload(msg);
 
 	ptr = ndp_msg_payload_opts(msg);
 	len = ndp_msg_payload_opts_len(msg);
 	while (len > 0) {
-		int err;
 		uint8_t opt_type = ptr[0];
 		uint8_t opt_len = ptr[1] << 3; /* convert to bytes */
 
 		if (!opt_len || len < opt_len)
 			break;
-		err = ndp_process_ra_opt(msgra, ptr, opt_type, opt_len);
-		if (err)
-			return err;
+		ndp_process_ra_opt(msgra, ptr, opt_type, opt_len);
 		ptr += opt_len;
 		len -= opt_len;
 	}
-
-	return ndp_call_handlers(ndp, msg);;
 }
 
-static int ndp_process_ns(struct ndp *ndp, struct ndp_msg *msg)
-{
-	//struct ndp_msgns msgns = ndp_msgns(msg);
-	size_t len = ndp_msg_payload_len(msg);
-
-	dbg(ndp, "rcvd NS, len: %luB", len);
-	return ndp_call_handlers(ndp, msg);;
-}
-
-static int ndp_process_na(struct ndp *ndp, struct ndp_msg *msg)
-{
-	//struct ndp_msgna msgna = ndp_msgna(msg);
-	size_t len = ndp_msg_payload_len(msg);
-
-	dbg(ndp, "rcvd NA, len: %luB", len);
-	return ndp_call_handlers(ndp, msg);;
-}
-
-static int ndp_process_r(struct ndp *ndp, struct ndp_msg *msg)
-{
-	//struct ndp_msgr msgr = ndp_msgr(msg);
-	size_t len = ndp_msg_payload_len(msg);
-
-	dbg(ndp, "rcvd R, len: %luB", len);
-	return ndp_call_handlers(ndp, msg);;
-}
+static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);
 
 static int ndp_sock_recv(struct ndp *ndp)
 {
@@ -1111,26 +1075,18 @@ static int ndp_sock_recv(struct ndp *ndp)
 		goto free_msg;
 	ndp_msg_init(msg, msg_type);
 
-	if (len < ndp_msg_type_info(i)->raw_struct_size) {
-		warn(ndp, "rcvd ND packet too short (%luB)", len);
+	if (len < ndp_msg_type_info(msg_type)->raw_struct_size) {
+		warn(ndp, "rcvd %s packet too short (%luB)",
+			  ndp_msg_type_info(msg_type)->strabbr, len);
 		return 0;
 	}
-	switch (msg->icmp6_hdr->icmp6_type) {
-	case ND_ROUTER_SOLICIT:
-		err = ndp_process_rs(ndp, msg);
-		break;
-	case ND_ROUTER_ADVERT:
-		err = ndp_process_ra(ndp, msg);
-		break;
-	case ND_NEIGHBOR_SOLICIT:
-		err = ndp_process_ns(ndp, msg);
-		break;
-	case ND_NEIGHBOR_ADVERT:
-		err = ndp_process_na(ndp, msg);
-	case ND_REDIRECT:
-		err = ndp_process_r(ndp, msg);
-		break;
-	}
+	dbg(ndp, "rcvd %s, len: %luB",
+		 ndp_msg_type_info(msg_type)->strabbr, len);
+
+	if (msg->icmp6_hdr->icmp6_type == ND_ROUTER_ADVERT)
+		ndp_process_ra(ndp, msg);
+
+	err = ndp_call_handlers(ndp, msg);;
 
 free_msg:
 	ndp_msg_destroy(msg);
