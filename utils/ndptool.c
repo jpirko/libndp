@@ -144,7 +144,8 @@ static void print_help(const char *argv0) {
             "\t-i --ifname=IFNAME       Specified interface name\n"
 	    "\t                         (\"rs\", \"ra\", \"ns\", \"na\")\n"
 	    "Available commands:\n"
-	    "\tmonitor\n",
+	    "\tmonitor\n"
+	    "\tsend\n",
             argv0);
 }
 
@@ -265,6 +266,30 @@ static int run_cmd_monitor(struct ndp *ndp, enum ndp_msg_type msg_type,
 	return err;
 }
 
+static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
+			uint32_t ifindex)
+{
+	struct ndp_msg *msg;
+	int err;
+
+	err = ndp_msg_new(&msg, msg_type);
+	if (err) {
+		pr_err("Failed to create message\n");
+		return err;
+	}
+	ndp_msg_ifindex_set(msg, ifindex);
+	err = ndp_msg_send(ndp, msg);
+	if (err) {
+		pr_err("Failed to send message\n");
+		goto msg_destroy;
+	}
+
+msg_destroy:
+	ndp_msg_destroy(msg);
+	return err;
+}
+
+
 static int get_msg_type(enum ndp_msg_type *p_msg_type, char *msgtypestr)
 {
 	if (!msgtypestr)
@@ -367,6 +392,22 @@ int main(int argc, char **argv)
 
 	if (!strncmp(cmd_name, "monitor", strlen(cmd_name))) {
 		err = run_cmd_monitor(ndp, msg_type, ifindex);
+	} else if (!strncmp(cmd_name, "send", strlen(cmd_name))) {
+		bool all_ok = true;
+
+		if (msg_type == NDP_MSG_ALL) {
+			pr_err("Message type must be selected\n");
+			all_ok = false;
+		}
+		if (!ifindex) {
+			pr_err("Interface name must be selected\n");
+			all_ok = false;
+		}
+		if (!all_ok) {
+			print_help(argv0);
+			goto errout;
+		}
+		err = run_cmd_send(ndp, msg_type, ifindex);
 	} else {
 		pr_err("Unknown command \"%s\"\n", cmd_name);
 		goto ndp_close;
