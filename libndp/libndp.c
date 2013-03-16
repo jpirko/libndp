@@ -234,11 +234,16 @@ static void ndp_sock_close(struct ndp *ndp)
 	close(ndp->sock);
 }
 
+struct ndp_msggeneric {
+	void *dataptr; /* must be first */
+};
+
 struct ndp_msgrs {
+	struct nd_router_solicit *rs; /* must be first */
 };
 
 struct ndp_msgra {
-	struct nd_router_advert *ra;
+	struct nd_router_advert *ra; /* must be first */
 	struct {
 		bool		present;
 		unsigned char	addr[ETH_ALEN];
@@ -649,12 +654,15 @@ uint32_t ndp_msgra_opt_mtu(struct ndp_msgra *msgra)
 }
 
 struct ndp_msgns {
+	struct nd_neighbor_solicit *ns; /* must be first */
 };
 
 struct ndp_msgna {
+	struct nd_neighbor_solicit *na; /* must be first */
 };
 
 struct ndp_msgr {
+	struct nd_redirect *r; /* must be first */
 };
 
 struct ndp_msg {
@@ -667,6 +675,7 @@ struct ndp_msg {
 	unsigned char *			opts_start; /* pointer to buf at the
 						       place where opts start */
 	union {
+		struct ndp_msggeneric	generic;
 		struct ndp_msgrs	rs;
 		struct ndp_msgra	ra;
 		struct ndp_msgns	ns;
@@ -751,6 +760,11 @@ static void ndp_msg_init(struct ndp_msg *msg, enum ndp_msg_type msg_type)
 	ndp_msg_type_set(msg, msg_type);
 	msg->opts_start = msg->buf +
 			  ndp_msg_type_info(msg_type)->raw_struct_size;
+
+	/* Set-up "first pointers" in all ndp_msgrs, ndp_msgra, ndp_msgns,
+	 * ndp_msgna, ndp_msgr structures.
+	 */
+	msg->nd_msg.generic.dataptr = ndp_msg_payload(msg);
 }
 
 /**
@@ -1035,8 +1049,6 @@ static void ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
 	struct ndp_msgra *msgra = ndp_msgra(msg);
 	size_t len = ndp_msg_payload_len(msg);
 	unsigned char *ptr;
-
-	msgra->ra = ndp_msg_payload(msg);
 
 	ptr = ndp_msg_payload_opts(msg);
 	len = ndp_msg_payload_opts_len(msg);
