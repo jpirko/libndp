@@ -91,6 +91,8 @@ void ndp_msg_destroy(struct ndp_msg *msg);
 void *ndp_msg_payload(struct ndp_msg *msg);
 size_t ndp_msg_payload_len(struct ndp_msg *msg);
 void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len);
+void *ndp_msg_payload_opts(struct ndp_msg *msg);
+size_t ndp_msg_payload_opts_len(struct ndp_msg *msg);
 struct ndp_msgrs *ndp_msgrs(struct ndp_msg *msg);
 struct ndp_msgra *ndp_msgra(struct ndp_msg *msg);
 struct ndp_msgns *ndp_msgns(struct ndp_msg *msg);

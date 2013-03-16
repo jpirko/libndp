@@ -234,13 +234,7 @@ struct ndp_msgrs {
 };
 
 struct ndp_msgra {
-	uint8_t			curhoplimit;
-	bool			flag_managed;
-	bool			flag_other;
-	bool			flag_home_agent;
-	uint16_t		router_lifetime;
-	uint32_t		reachable_time;
-	uint32_t		retransmit_time;
+	struct nd_router_advert *ra;
 	struct {
 		bool		present;
 		unsigned char	addr[ETH_ALEN];
@@ -276,7 +270,7 @@ struct ndp_msgra {
 NDP_EXPORT
 uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra)
 {
-	return msgra->curhoplimit;
+	return msgra->ra->nd_ra_curhoplimit;
 }
 
 /**
@@ -288,7 +282,7 @@ uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra)
 NDP_EXPORT
 void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit)
 {
-	msgra->curhoplimit = curhoplimit;
+	msgra->ra->nd_ra_curhoplimit = curhoplimit;
 }
 
 /**
@@ -302,7 +296,7 @@ void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit)
 NDP_EXPORT
 bool ndp_msgra_flag_managed(struct ndp_msgra *msgra)
 {
-	return msgra->flag_managed;
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED;
 }
 
 /**
@@ -314,7 +308,10 @@ bool ndp_msgra_flag_managed(struct ndp_msgra *msgra)
 NDP_EXPORT
 void ndp_msgra_flag_managed_set(struct ndp_msgra *msgra, bool flag_managed)
 {
-	msgra->flag_managed = flag_managed;
+	if (flag_managed)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_MANAGED;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_MANAGED;
 }
 
 /**
@@ -328,7 +325,7 @@ void ndp_msgra_flag_managed_set(struct ndp_msgra *msgra, bool flag_managed)
 NDP_EXPORT
 bool ndp_msgra_flag_other(struct ndp_msgra *msgra)
 {
-	return msgra->flag_other;
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER;
 }
 
 /**
@@ -340,7 +337,10 @@ bool ndp_msgra_flag_other(struct ndp_msgra *msgra)
 NDP_EXPORT
 void ndp_msgra_flag_other_set(struct ndp_msgra *msgra, bool flag_other)
 {
-	msgra->flag_other = flag_other;
+	if (flag_other)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_OTHER;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_OTHER;
 }
 
 /**
@@ -354,7 +354,7 @@ void ndp_msgra_flag_other_set(struct ndp_msgra *msgra, bool flag_other)
 NDP_EXPORT
 bool ndp_msgra_flag_home_agent(struct ndp_msgra *msgra)
 {
-	return msgra->flag_home_agent;
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_HOME_AGENT;
 }
 
 /**
@@ -367,7 +367,10 @@ NDP_EXPORT
 void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
 				   bool flag_home_agent)
 {
-	msgra->flag_home_agent = flag_home_agent;
+	if (flag_home_agent)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_HOME_AGENT;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_HOME_AGENT;
 }
 
 /**
@@ -381,7 +384,7 @@ void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
 NDP_EXPORT
 uint16_t ndp_msgra_router_lifetime(struct ndp_msgra *msgra)
 {
-	return msgra->router_lifetime;
+	return ntohs(msgra->ra->nd_ra_router_lifetime);
 }
 
 /**
@@ -394,7 +397,7 @@ NDP_EXPORT
 void ndp_msgra_router_lifetime_set(struct ndp_msgra *msgra,
 				   uint16_t router_lifetime)
 {
-	msgra->router_lifetime = router_lifetime;
+	msgra->ra->nd_ra_router_lifetime = htons(router_lifetime);
 }
 
 /**
@@ -408,7 +411,7 @@ void ndp_msgra_router_lifetime_set(struct ndp_msgra *msgra,
 NDP_EXPORT
 uint32_t ndp_msgra_reachable_time(struct ndp_msgra *msgra)
 {
-	return msgra->reachable_time;
+	return ntohl(msgra->ra->nd_ra_reachable);
 }
 
 /**
@@ -421,7 +424,7 @@ NDP_EXPORT
 void ndp_msgra_reachable_time_set(struct ndp_msgra *msgra,
 				  uint32_t reachable_time)
 {
-	msgra->reachable_time = reachable_time;
+	msgra->ra->nd_ra_reachable = htonl(reachable_time);
 }
 
 /**
@@ -435,7 +438,7 @@ void ndp_msgra_reachable_time_set(struct ndp_msgra *msgra,
 NDP_EXPORT
 uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra)
 {
-	return msgra->retransmit_time;
+	return ntohl(msgra->ra->nd_ra_retransmit);
 }
 
 /**
@@ -448,7 +451,7 @@ NDP_EXPORT
 void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time)
 {
-	msgra->retransmit_time = retransmit_time;
+	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
 }
 
 /**
@@ -657,6 +660,8 @@ struct ndp_msg {
 	struct in6_addr			addrto;
 	uint32_t			ifindex;
 	enum ndp_msg_type		type;
+	unsigned char *			opts_start; /* pointer to buf at the
+						       place where opts start */
 	union {
 		struct ndp_msgrs	rs;
 		struct ndp_msgra	ra;
@@ -664,6 +669,35 @@ struct ndp_msg {
 		struct ndp_msgna	na;
 		struct ndp_msgr		r;
 	} nd_msg;
+};
+
+struct ndp_msg_type_info {
+	uint8_t raw_type;
+	size_t raw_struct_size;
+};
+
+static struct ndp_msg_type_info ndp_msg_type_infos[] =
+{
+	[NDP_MSG_RS] = {
+		.raw_type = ND_ROUTER_SOLICIT,
+		.raw_struct_size = sizeof(struct nd_router_solicit),
+	},
+	[NDP_MSG_RA] = {
+		.raw_type = ND_ROUTER_ADVERT,
+		.raw_struct_size = sizeof(struct nd_router_advert),
+	},
+	[NDP_MSG_NS] = {
+		.raw_type = ND_NEIGHBOR_SOLICIT,
+		.raw_struct_size = sizeof(struct nd_neighbor_solicit),
+	},
+	[NDP_MSG_NA] = {
+		.raw_type = ND_NEIGHBOR_ADVERT,
+		.raw_struct_size = sizeof(struct nd_neighbor_advert),
+	},
+	[NDP_MSG_R] = {
+		.raw_type = ND_REDIRECT,
+		.raw_struct_size = sizeof(struct nd_redirect),
+	},
 };
 
 static struct ndp_msg *ndp_msg_alloc(void)
@@ -675,6 +709,14 @@ static struct ndp_msg *ndp_msg_alloc(void)
 		return NULL;
 	msg->len = sizeof(msg->buf);
 	return msg;
+}
+
+static void ndp_msg_init(struct ndp_msg *msg, enum ndp_msg_type msg_type)
+{
+	struct ndp_msg_type_info *type_info = &ndp_msg_type_infos[msg_type];
+
+	msg->type = msg_type;
+	msg->opts_start = msg->buf + type_info->raw_struct_size;
 }
 
 /**
@@ -696,7 +738,7 @@ int ndp_msg_new(struct ndp_msg **p_msg, enum ndp_msg_type msg_type)
 	msg = ndp_msg_alloc();
 	if (!msg)
 		return -ENOMEM;
-	msg->type = msg_type;
+	ndp_msg_init(msg, msg_type);
 	return 0;
 }
 
@@ -743,7 +785,7 @@ size_t ndp_msg_payload_len(struct ndp_msg *msg)
  * ndp_msg_payload_len_set:
  * @msg: message structure
  *
- * Set raw Neighbour discovery packet part from the message data length.
+ * Set raw Neighbour discovery packet data length.
  **/
 NDP_EXPORT
 void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len)
@@ -751,6 +793,34 @@ void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len)
 	if (len > sizeof(msg->buf))
 		len = sizeof(msg->buf);
 	msg->len = len;
+}
+
+/**
+ * ndp_msg_payload_opts:
+ * @msg: message structure
+ *
+ * Get raw Neighbour discovery packet options part data.
+ *
+ * Returns: pointer to raw data.
+ **/
+NDP_EXPORT
+void *ndp_msg_payload_opts(struct ndp_msg *msg)
+{
+	return msg->opts_start;
+}
+
+/**
+ * ndp_msg_payload_opts_len:
+ * @msg: message structure
+ *
+ * Get raw Neighbour discovery packet options part data length.
+ *
+ * Returns: length in bytes.
+ **/
+NDP_EXPORT
+size_t ndp_msg_payload_opts_len(struct ndp_msg *msg)
+{
+	return msg->len - (msg->opts_start - msg->buf);
 }
 
 /**
@@ -930,26 +1000,18 @@ static int ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
 static int ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
 {
 	struct ndp_msgra *msgra = ndp_msgra(msg);
-	struct nd_router_advert *ra = ndp_msg_payload(msg);
 	size_t len = ndp_msg_payload_len(msg);
 	unsigned char *ptr;
 
 	dbg(ndp, "rcvd RA, len: %luB", len);
-	if (len < sizeof(*ra)) {
+	if (len < sizeof(msgra->ra)) {
 		warn(ndp, "rcvd RA packet too short (%luB)", len);
 		return 0;
 	}
-	msgra->curhoplimit = ra->nd_ra_curhoplimit;
-	msgra->flag_managed = ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED;
-	msgra->flag_other = ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER;
-	msgra->flag_home_agent = ra->nd_ra_flags_reserved & ND_RA_FLAG_HOME_AGENT;
-	msgra->router_lifetime = ntohs(ra->nd_ra_router_lifetime);
-	msgra->reachable_time = ntohl(ra->nd_ra_reachable);
-	msgra->retransmit_time = ntohl(ra->nd_ra_retransmit);
+	msgra->ra = ndp_msg_payload(msg);
 
-	ptr = ((unsigned char *) ra) + sizeof(*ra);
-	len -= sizeof(ra);
-
+	ptr = ndp_msg_payload_opts(msg);
+	len = ndp_msg_payload_opts_len(msg);
 	while (len > 0) {
 		int err;
 		uint8_t opt_type = ptr[0];
@@ -1028,22 +1090,22 @@ static int ndp_sock_recv(struct ndp *ndp)
 	err = 0;
 	switch (icmp6_hdr->icmp6_type) {
 	case ND_ROUTER_SOLICIT:
-		msg->type = NDP_MSG_RS;
+		ndp_msg_init(msg, NDP_MSG_RS);
 		err = ndp_process_rs(ndp, msg);
 		break;
 	case ND_ROUTER_ADVERT:
-		msg->type = NDP_MSG_RA;
+		ndp_msg_init(msg, NDP_MSG_RA);
 		err = ndp_process_ra(ndp, msg);
 		break;
 	case ND_NEIGHBOR_SOLICIT:
-		msg->type = NDP_MSG_NS;
+		ndp_msg_init(msg, NDP_MSG_NS);
 		err = ndp_process_ns(ndp, msg);
 		break;
 	case ND_NEIGHBOR_ADVERT:
-		msg->type = NDP_MSG_NA;
+		ndp_msg_init(msg, NDP_MSG_NA);
 		err = ndp_process_na(ndp, msg);
 	case ND_REDIRECT:
-		msg->type = NDP_MSG_R;
+		ndp_msg_init(msg, NDP_MSG_R);
 		err = ndp_process_r(ndp, msg);
 		break;
 	}
