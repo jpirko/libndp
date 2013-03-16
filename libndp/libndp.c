@@ -27,7 +27,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
-#include <netdb.h>
+#include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <assert.h>
 #include <ndp.h>
@@ -136,8 +136,9 @@ static void *myzalloc(size_t size)
 }
 
 static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
-		       struct sockaddr_in6 *src_addr, uint32_t *ifindex)
+		       struct in6_addr *addr, uint32_t *ifindex)
 {
+	struct sockaddr_in6 sin6;
 	unsigned char cbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct iovec iovec;
 	struct msghdr msghdr;
@@ -147,8 +148,8 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	iovec.iov_len = *buflen;
 	iovec.iov_base = buf;
 	memset(&msghdr, 0, sizeof(msghdr));
-	msghdr.msg_name = src_addr;
-	msghdr.msg_namelen = sizeof(*src_addr);
+	msghdr.msg_name = &sin6;
+	msghdr.msg_namelen = sizeof(sin6);
 	msghdr.msg_iov = &iovec;
 	msghdr.msg_iovlen = 1;
 	msghdr.msg_control = cbuf;
@@ -163,7 +164,7 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	 * set by kernel for linklocal addresses, use pktinfo to obtain that
 	 * value right after.
 	 */
-	*ifindex = src_addr->sin6_scope_id;
+	*ifindex = sin6.sin6_scope_id;
         for (cmsghdr = CMSG_FIRSTHDR(&msghdr); cmsghdr;
 	     cmsghdr = CMSG_NXTHDR(&msghdr, cmsghdr)) {
 		if (cmsghdr->cmsg_level == IPPROTO_IPV6 &&
@@ -179,18 +180,11 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	return 0;
 }
 
-static char *ndp_str_sin6(struct ndp *ndp, struct sockaddr_in6 *addr)
+static const char *str_in6_addr(struct in6_addr *addr)
 {
-	static char buf[NI_MAXHOST];
-	int err;
+	static char buf[INET6_ADDRSTRLEN];
 
-	err = getnameinfo((struct sockaddr *) addr, sizeof(*addr),
-			  buf, sizeof(buf), NULL, 0, NI_NUMERICHOST);
-	if (err) {
-		err(ndp, "getnameinfo failed: %s", gai_strerror(err));
-		return NULL;
-	}
-	return buf;
+	return inet_ntop(AF_INET6, addr, buf, sizeof(buf));
 }
 
 
@@ -1068,7 +1062,6 @@ static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);
 
 static int ndp_sock_recv(struct ndp *ndp)
 {
-	struct sockaddr_in6 src_addr;
 	uint32_t ifindex = ifindex;
 	struct ndp_msg *msg;
 	enum ndp_msg_type msg_type;
@@ -1079,15 +1072,14 @@ static int ndp_sock_recv(struct ndp *ndp)
 	if (!msg)
 		return -ENOMEM;
 
-	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0, &src_addr, &ifindex);
+	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0, &msg->addrto, &ifindex);
 	if (err) {
 		err(ndp, "Failed to receive message");
 		goto free_msg;
 	}
 	dbg(ndp, "rcvd from: %s, ifindex: %u",
-		 ndp_str_sin6(ndp, &src_addr), ifindex);
+		 str_in6_addr(&msg->addrto), ifindex);
 
-	msg->addrto = src_addr.sin6_addr;
 	msg->ifindex = ifindex;
 	ndp_msg_payload_len_set(msg, len);
 
