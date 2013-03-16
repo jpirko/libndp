@@ -126,6 +126,8 @@ void ndp_set_log_priority(struct ndp *ndp, int priority)
  * @short_description: various internal helper functions
  */
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 static void *myzalloc(size_t size)
 {
 	return calloc(1, size);
@@ -677,7 +679,7 @@ struct ndp_msg_type_info {
 	size_t raw_struct_size;
 };
 
-static struct ndp_msg_type_info ndp_msg_type_infos[] =
+static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 {
 	[NDP_MSG_RS] = {
 		.raw_type = ND_ROUTER_SOLICIT,
@@ -701,6 +703,22 @@ static struct ndp_msg_type_info ndp_msg_type_infos[] =
 	},
 };
 
+#define NDP_MSG_TYPE_LIST_SIZE ARRAY_SIZE(ndp_msg_type_info_list)
+
+static int ndp_msg_type_by_raw_type(enum ndp_msg_type *p_msg_type,
+				    uint8_t raw_type)
+{
+	int i;
+
+	for (i = 0; i < NDP_MSG_TYPE_LIST_SIZE; i++) {
+		if (ndp_msg_type_info_list[i].raw_type == raw_type) {
+			*p_msg_type = i;
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
 static struct ndp_msg *ndp_msg_alloc(void)
 {
 	struct ndp_msg *msg;
@@ -715,7 +733,7 @@ static struct ndp_msg *ndp_msg_alloc(void)
 
 static void ndp_msg_init(struct ndp_msg *msg, enum ndp_msg_type msg_type)
 {
-	struct ndp_msg_type_info *type_info = &ndp_msg_type_infos[msg_type];
+	struct ndp_msg_type_info *type_info = &ndp_msg_type_info_list[msg_type];
 
 	msg->type = msg_type;
 	msg->opts_start = msg->buf + type_info->raw_struct_size;
@@ -1063,6 +1081,7 @@ static int ndp_sock_recv(struct ndp *ndp)
 	struct sockaddr_in6 src_addr;
 	uint32_t ifindex = ifindex;
 	struct ndp_msg *msg;
+	enum ndp_msg_type msg_type;
 	size_t len = sizeof(msg->buf);
 	int err;
 
@@ -1086,26 +1105,24 @@ static int ndp_sock_recv(struct ndp *ndp)
 		warn(ndp, "rcvd icmp6 packet too short (%luB)", len);
 		return 0;
 	}
+	err = ndp_msg_type_by_raw_type(&msg_type, msg->icmp6_hdr->icmp6_type);
+	if (err)
+		goto free_msg;
+	ndp_msg_init(msg, msg_type);
 
-	err = 0;
 	switch (msg->icmp6_hdr->icmp6_type) {
 	case ND_ROUTER_SOLICIT:
-		ndp_msg_init(msg, NDP_MSG_RS);
 		err = ndp_process_rs(ndp, msg);
 		break;
 	case ND_ROUTER_ADVERT:
-		ndp_msg_init(msg, NDP_MSG_RA);
 		err = ndp_process_ra(ndp, msg);
 		break;
 	case ND_NEIGHBOR_SOLICIT:
-		ndp_msg_init(msg, NDP_MSG_NS);
 		err = ndp_process_ns(ndp, msg);
 		break;
 	case ND_NEIGHBOR_ADVERT:
-		ndp_msg_init(msg, NDP_MSG_NA);
 		err = ndp_process_na(ndp, msg);
 	case ND_REDIRECT:
-		ndp_msg_init(msg, NDP_MSG_R);
 		err = ndp_process_r(ndp, msg);
 		break;
 	}
