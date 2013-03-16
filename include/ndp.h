@@ -101,6 +101,7 @@ struct ndp_msgr *ndp_msgr(struct ndp_msg *msg);
 enum ndp_msg_type ndp_msg_type(struct ndp_msg *msg);
 struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg);
 uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
+void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
 int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
 
 typedef int (*ndp_msgrcv_handler_func_t)(struct ndp *ndp, struct ndp_msg *msg,

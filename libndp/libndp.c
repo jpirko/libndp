@@ -1035,6 +1035,18 @@ uint32_t ndp_msg_ifindex(struct ndp_msg *msg)
 }
 
 /**
+ * ndp_msg_ifindex_set:
+ * @msg: message structure
+ *
+ * Set raw interface index of message.
+ **/
+NDP_EXPORT
+void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
+{
+	msg->ifindex = ifindex;
+}
+
+/**
  * ndp_msg_send:
  * @ndp: libndp library context
  * @msg: message structure
