@@ -1028,10 +1028,6 @@ static int ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
 	unsigned char *ptr;
 
 	dbg(ndp, "rcvd RA, len: %luB", len);
-	if (len < sizeof(msgra->ra)) {
-		warn(ndp, "rcvd RA packet too short (%luB)", len);
-		return 0;
-	}
 	msgra->ra = ndp_msg_payload(msg);
 
 	ptr = ndp_msg_payload_opts(msg);
@@ -1115,6 +1111,10 @@ static int ndp_sock_recv(struct ndp *ndp)
 		goto free_msg;
 	ndp_msg_init(msg, msg_type);
 
+	if (len < ndp_msg_type_info(i)->raw_struct_size) {
+		warn(ndp, "rcvd ND packet too short (%luB)", len);
+		return 0;
+	}
 	switch (msg->icmp6_hdr->icmp6_type) {
 	case ND_ROUTER_SOLICIT:
 		err = ndp_process_rs(ndp, msg);
