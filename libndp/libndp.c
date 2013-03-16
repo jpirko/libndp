@@ -29,6 +29,7 @@
 #include <netinet/icmp6.h>
 #include <netdb.h>
 #include <net/ethernet.h>
+#include <assert.h>
 #include <ndp.h>
 
 #include "ndp_private.h"
@@ -127,6 +128,7 @@ void ndp_set_log_priority(struct ndp *ndp, int priority)
  */
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define BUG_ON(expr) { if (expr) assert(0); }
 
 static void *myzalloc(size_t size)
 {
@@ -661,7 +663,6 @@ struct ndp_msg {
 	size_t				len;
 	struct in6_addr			addrto;
 	uint32_t			ifindex;
-	enum ndp_msg_type		type;
 	struct icmp6_hdr *		icmp6_hdr;
 	unsigned char *			opts_start; /* pointer to buf at the
 						       place where opts start */
@@ -743,9 +744,11 @@ static struct ndp_msg *ndp_msg_alloc(void)
 	return msg;
 }
 
+static void ndp_msg_type_set(struct ndp_msg *msg, enum ndp_msg_type msg_type);
+
 static void ndp_msg_init(struct ndp_msg *msg, enum ndp_msg_type msg_type)
 {
-	msg->type = msg_type;
+	ndp_msg_type_set(msg, msg_type);
 	msg->opts_start = msg->buf +
 			  ndp_msg_type_info(msg_type)->raw_struct_size;
 }
@@ -945,7 +948,18 @@ struct ndp_msgr *ndp_msgr(struct ndp_msg *msg)
 NDP_EXPORT
 enum ndp_msg_type ndp_msg_type(struct ndp_msg *msg)
 {
-	return msg->type;
+	enum ndp_msg_type msg_type;
+	int err;
+
+	err = ndp_msg_type_by_raw_type(&msg_type, msg->icmp6_hdr->icmp6_type);
+	/* Type should be always set correctly (ensured by ndp_msg_init) */
+	BUG_ON(err);
+	return msg_type;
+}
+
+static void ndp_msg_type_set(struct ndp_msg *msg, enum ndp_msg_type msg_type)
+{
+	msg->icmp6_hdr->icmp6_type = ndp_msg_type_info(msg_type)->raw_type;
 }
 
 /**
@@ -1132,7 +1146,7 @@ static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg)
 	list_for_each_node_entry(handler_item,
 				 &ndp->msgrcv_handler_list, list) {
 		if (handler_item->msg_type != NDP_MSG_ALL &&
-		    handler_item->msg_type != msg->type)
+		    handler_item->msg_type != ndp_msg_type(msg))
 			continue;
 		if (handler_item->ifindex &&
 		    handler_item->ifindex != msg->ifindex)
