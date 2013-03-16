@@ -660,6 +660,7 @@ struct ndp_msg {
 	struct in6_addr			addrto;
 	uint32_t			ifindex;
 	enum ndp_msg_type		type;
+	struct icmp6_hdr *		icmp6_hdr;
 	unsigned char *			opts_start; /* pointer to buf at the
 						       place where opts start */
 	union {
@@ -708,6 +709,7 @@ static struct ndp_msg *ndp_msg_alloc(void)
 	if (!msg)
 		return NULL;
 	msg->len = sizeof(msg->buf);
+	msg->icmp6_hdr = (struct icmp6_hdr *) msg->buf;
 	return msg;
 }
 
@@ -1060,7 +1062,6 @@ static int ndp_sock_recv(struct ndp *ndp)
 {
 	struct sockaddr_in6 src_addr;
 	uint32_t ifindex = ifindex;
-	struct icmp6_hdr *icmp6_hdr;
 	struct ndp_msg *msg;
 	size_t len = sizeof(msg->buf);
 	int err;
@@ -1080,15 +1081,14 @@ static int ndp_sock_recv(struct ndp *ndp)
 	msg->addrto = src_addr.sin6_addr;
 	msg->ifindex = ifindex;
 	ndp_msg_payload_len_set(msg, len);
-	icmp6_hdr = ndp_msg_payload(msg);
 
-	if (len < sizeof(*icmp6_hdr)) {
+	if (len < sizeof(*msg->icmp6_hdr)) {
 		warn(ndp, "rcvd icmp6 packet too short (%luB)", len);
 		return 0;
 	}
 
 	err = 0;
-	switch (icmp6_hdr->icmp6_type) {
+	switch (msg->icmp6_hdr->icmp6_type) {
 	case ND_ROUTER_SOLICIT:
 		ndp_msg_init(msg, NDP_MSG_RS);
 		err = ndp_process_rs(ndp, msg);
