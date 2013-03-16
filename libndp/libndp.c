@@ -180,6 +180,33 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	return 0;
 }
 
+static int mysendto6(int sockfd, void *buf, size_t buflen, int flags,
+		     struct in6_addr *addr, uint32_t ifindex)
+{
+	struct sockaddr_in6 sin6;
+	ssize_t ret;
+
+	memset(&sin6, 0, sizeof(sin6));
+	memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
+	sin6.sin6_scope_id = ifindex;
+resend:
+	ret = sendto(sockfd, buf, buflen, flags, &sin6, sizeof(sin6));
+	if (ret == -1) {
+		switch(errno) {
+		case EINTR:
+			goto resend;
+		case ENETDOWN:
+		case ENETUNREACH:
+		case EADDRNOTAVAIL:
+		case ENXIO:
+			return 0;
+		default:
+			return -errno;
+		}
+	}
+	return 0;
+}
+
 static const char *str_in6_addr(struct in6_addr *addr)
 {
 	static char buf[INET6_ADDRSTRLEN];
@@ -212,6 +239,15 @@ static int ndp_sock_open(struct ndp *ndp)
 			 &val, sizeof(val));
 	if (ret == -1) {
 		err(ndp, "Failed to setsockopt IPV6_RECVPKTINFO.");
+		err = -errno;
+		goto close_sock;
+	}
+
+	val = 255;
+	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+			 &val, sizeof(val));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt IPV6_MULTICAST_HOPS.");
 		err = -errno;
 		goto close_sock;
 	}
@@ -996,6 +1032,22 @@ NDP_EXPORT
 uint32_t ndp_msg_ifindex(struct ndp_msg *msg)
 {
 	return msg->ifindex;
+}
+
+/**
+ * ndp_msg_send:
+ * @ndp: libndp library context
+ * @msg: message structure
+ *
+ * Send message.
+ *
+ * Returns: zero on success or negative number in case of an error.
+ **/
+NDP_EXPORT
+int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
+{
+	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
+			 &msg->addrto, msg->ifindex);
 }
 
 static void ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
