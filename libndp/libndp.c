@@ -155,7 +155,7 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	msghdr.msg_control = cbuf;
 	msghdr.msg_controllen = sizeof(cbuf);
 
-	len = recvmsg(sockfd, &msghdr, 0);
+	len = recvmsg(sockfd, &msghdr, flags);
 	if (len == -1)
 		return -errno;
 	*buflen = len;
