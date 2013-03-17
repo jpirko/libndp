@@ -719,7 +719,32 @@ struct ndp_msg_type_info {
 	char strabbr[NDP_STRABBR_SIZE];
 	uint8_t raw_type;
 	size_t raw_struct_size;
+	void (*addrto_adjust)(struct in6_addr *addr);
 };
+
+static void ndp_msg_addrto_adjust_all_nodes(struct in6_addr *addr)
+{
+	struct in6_addr any = IN6ADDR_ANY_INIT;
+
+	if (memcmp(addr, &any, sizeof(any)))
+		return;
+	addr->s6_addr32[0] = htonl(0xFF020000);
+	addr->s6_addr32[1] = 0;
+	addr->s6_addr32[2] = 0;
+	addr->s6_addr32[3] = htonl(0x1);
+}
+
+static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
+{
+	struct in6_addr any = IN6ADDR_ANY_INIT;
+
+	if (memcmp(addr, &any, sizeof(any)))
+		return;
+	addr->s6_addr32[0] = htonl(0xFF020000);
+	addr->s6_addr32[1] = 0;
+	addr->s6_addr32[2] = 0;
+	addr->s6_addr32[3] = htonl(0x2);
+}
 
 static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 {
@@ -727,6 +752,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "RS",
 		.raw_type = ND_ROUTER_SOLICIT,
 		.raw_struct_size = sizeof(struct nd_router_solicit),
+		.addrto_adjust = ndp_msg_addrto_adjust_all_routers,
 	},
 	[NDP_MSG_RA] = {
 		.strabbr = "RA",
@@ -737,6 +763,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "NS",
 		.raw_type = ND_NEIGHBOR_SOLICIT,
 		.raw_struct_size = sizeof(struct nd_neighbor_solicit),
+		.addrto_adjust = ndp_msg_addrto_adjust_all_nodes,
 	},
 	[NDP_MSG_NA] = {
 		.strabbr = "NA",
@@ -1059,6 +1086,10 @@ void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
 NDP_EXPORT
 int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 {
+	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+
+	if (ndp_msg_type_info(msg_type)->addrto_adjust)
+		ndp_msg_type_info(msg_type)->addrto_adjust(&msg->addrto);
 	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
 			 &msg->addrto, msg->ifindex);
 }
