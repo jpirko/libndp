@@ -89,6 +89,7 @@ uint32_t ndp_msgra_opt_mtu(struct ndp_msgra *msgra);
 int ndp_msg_new(struct ndp_msg **p_msg, enum ndp_msg_type msg_type);
 void ndp_msg_destroy(struct ndp_msg *msg);
 void *ndp_msg_payload(struct ndp_msg *msg);
+size_t ndp_msg_payload_maxlen(struct ndp_msg *msg);
 size_t ndp_msg_payload_len(struct ndp_msg *msg);
 void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len);
 void *ndp_msg_payload_opts(struct ndp_msg *msg);

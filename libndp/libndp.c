@@ -805,7 +805,6 @@ static struct ndp_msg *ndp_msg_alloc(void)
 	msg = myzalloc(sizeof(*msg));
 	if (!msg)
 		return NULL;
-	msg->len = sizeof(msg->buf);
 	msg->icmp6_hdr = (struct icmp6_hdr *) msg->buf;
 	return msg;
 }
@@ -814,9 +813,11 @@ static void ndp_msg_type_set(struct ndp_msg *msg, enum ndp_msg_type msg_type);
 
 static void ndp_msg_init(struct ndp_msg *msg, enum ndp_msg_type msg_type)
 {
+	size_t raw_struct_size = ndp_msg_type_info(msg_type)->raw_struct_size;
+
 	ndp_msg_type_set(msg, msg_type);
-	msg->opts_start = msg->buf +
-			  ndp_msg_type_info(msg_type)->raw_struct_size;
+	msg->len = raw_struct_size;
+	msg->opts_start = msg->buf + raw_struct_size;
 
 	/* Set-up "first pointers" in all ndp_msgrs, ndp_msgra, ndp_msgns,
 	 * ndp_msgna, ndp_msgr structures.
@@ -871,6 +872,20 @@ NDP_EXPORT
 void *ndp_msg_payload(struct ndp_msg *msg)
 {
 	return msg->buf;
+}
+
+/**
+ * ndp_msg_payload_maxlen:
+ * @msg: message structure
+ *
+ * Get raw Neighbour discovery packet data maximum length.
+ *
+ * Returns: length in bytes.
+ **/
+NDP_EXPORT
+size_t ndp_msg_payload_maxlen(struct ndp_msg *msg)
+{
+	return sizeof(msg->buf);
 }
 
 /**
@@ -1160,13 +1175,14 @@ static int ndp_sock_recv(struct ndp *ndp)
 {
 	struct ndp_msg *msg;
 	enum ndp_msg_type msg_type;
-	size_t len = sizeof(msg->buf);
+	size_t len;
 	int err;
 
 	msg = ndp_msg_alloc();
 	if (!msg)
 		return -ENOMEM;
 
+	len = ndp_msg_payload_maxlen(msg);
 	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0,
 			  &msg->addrto, &msg->ifindex);
 	if (err) {
@@ -1175,8 +1191,6 @@ static int ndp_sock_recv(struct ndp *ndp)
 	}
 	dbg(ndp, "rcvd from: %s, ifindex: %u",
 		 str_in6_addr(&msg->addrto), msg->ifindex);
-
-	ndp_msg_payload_len_set(msg, len);
 
 	if (len < sizeof(*msg->icmp6_hdr)) {
 		warn(ndp, "rcvd icmp6 packet too short (%luB)", len);
@@ -1187,6 +1201,7 @@ static int ndp_sock_recv(struct ndp *ndp)
 	if (err)
 		goto free_msg;
 	ndp_msg_init(msg, msg_type);
+	ndp_msg_payload_len_set(msg, len);
 
 	if (len < ndp_msg_type_info(msg_type)->raw_struct_size) {
 		warn(ndp, "rcvd %s packet too short (%luB)",
