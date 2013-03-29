@@ -172,6 +172,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 {
 	char ifname[IF_NAMESIZE];
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+	int offset;
 
 	if_indextoname(ndp_msg_ifindex(msg), ifname);
 	pr_out("NDP payload len %lu, from addr: %s, iface: %s\n",
@@ -204,25 +205,26 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 		} else {
 			pr_out("unspecified\n");
 		}
-		if (ndp_msgra_opt_source_linkaddr_present(msgra)) {
+
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_SLLADDR) {
 			pr_out("  Source linkaddr: ");
-			pr_out_hwaddr(ndp_msgra_opt_source_linkaddr(msgra),
-				      ndp_msgra_opt_source_linkaddr_len(msgra));
+			pr_out_hwaddr(ndp_msg_opt_slladdr(msg, offset),
+				      ndp_msg_opt_slladdr_len(msg, offset));
 		}
-		if (ndp_msgra_opt_target_linkaddr_present(msgra)) {
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_TLLADDR) {
 			pr_out("  Target linkaddr: ");
-			pr_out_hwaddr(ndp_msgra_opt_target_linkaddr(msgra),
-				      ndp_msgra_opt_target_linkaddr_len(msgra));
+			pr_out_hwaddr(ndp_msg_opt_tlladdr(msg, offset),
+				      ndp_msg_opt_tlladdr_len(msg, offset));
 		}
-		if (ndp_msgra_opt_prefix_present(msgra)) {
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_PREFIX) {
 			uint32_t valid_time;
 			uint32_t preferred_time;
 
-			valid_time = ndp_msgra_opt_prefix_valid_time(msgra);
-			preferred_time = ndp_msgra_opt_prefix_preferred_time(msgra);
+			valid_time = ndp_msg_opt_prefix_valid_time(msg, offset);
+			preferred_time = ndp_msg_opt_prefix_preferred_time(msg, offset);
 			pr_out("  Prefix: %s/%u",
-			       str_in6_addr(ndp_msgra_opt_prefix(msgra)),
-			       ndp_msgra_opt_prefix_len(msgra));
+			       str_in6_addr(ndp_msg_opt_prefix(msg, offset)),
+			       ndp_msg_opt_prefix_len(msg, offset));
 			pr_out(", valid_time: ");
 			if (valid_time == (uint32_t) -1)
 				pr_out("infinity");
@@ -235,8 +237,8 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 				pr_out("%us", preferred_time);
 			pr_out("\n");
 		}
-		if (ndp_msgra_opt_mtu_present(msgra))
-			pr_out("  MTU: %u\n", ndp_msgra_opt_mtu(msgra));
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_MTU)
+			pr_out("  MTU: %u\n", ndp_msg_opt_mtu(msg, offset));
 	} else if (msg_type == NDP_MSG_NS) {
 		pr_out("  Type: NS\n");
 	} else if (msg_type == NDP_MSG_NA) {

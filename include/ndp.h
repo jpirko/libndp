@@ -52,6 +52,25 @@ enum ndp_msg_type {
 	NDP_MSG_ALL, /* Matches all */
 };
 
+int ndp_msg_new(struct ndp_msg **p_msg, enum ndp_msg_type msg_type);
+void ndp_msg_destroy(struct ndp_msg *msg);
+void *ndp_msg_payload(struct ndp_msg *msg);
+size_t ndp_msg_payload_maxlen(struct ndp_msg *msg);
+size_t ndp_msg_payload_len(struct ndp_msg *msg);
+void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len);
+void *ndp_msg_payload_opts(struct ndp_msg *msg);
+size_t ndp_msg_payload_opts_len(struct ndp_msg *msg);
+struct ndp_msgrs *ndp_msgrs(struct ndp_msg *msg);
+struct ndp_msgra *ndp_msgra(struct ndp_msg *msg);
+struct ndp_msgns *ndp_msgns(struct ndp_msg *msg);
+struct ndp_msgna *ndp_msgna(struct ndp_msg *msg);
+struct ndp_msgr *ndp_msgr(struct ndp_msg *msg);
+enum ndp_msg_type ndp_msg_type(struct ndp_msg *msg);
+struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg);
+uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
+void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
+int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
+
 uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra);
 void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit);
 bool ndp_msgra_flag_managed(struct ndp_msgra *msgra);
@@ -71,39 +90,33 @@ uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra);
 void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time);
 
-bool ndp_msgra_opt_source_linkaddr_present(struct ndp_msgra *msgra);
-unsigned char *ndp_msgra_opt_source_linkaddr(struct ndp_msgra *msgra);
-size_t ndp_msgra_opt_source_linkaddr_len(struct ndp_msgra *msgra);
-bool ndp_msgra_opt_target_linkaddr_present(struct ndp_msgra *msgra);
-unsigned char *ndp_msgra_opt_target_linkaddr(struct ndp_msgra *msgra);
-size_t ndp_msgra_opt_target_linkaddr_len(struct ndp_msgra *msgra);
+enum ndp_msg_opt_type {
+	NDP_MSG_OPT_SLLADDR, /* Source Link-layer Address */
+	NDP_MSG_OPT_TLLADDR, /* Target Link-layer Address */
+	NDP_MSG_OPT_PREFIX, /* Prefix Information */
+	NDP_MSG_OPT_REDIR, /* Redirected Header */
+	NDP_MSG_OPT_MTU, /* MTU */
+};
 
-bool ndp_msgra_opt_prefix_present(struct ndp_msgra *msgra);
-struct in6_addr *ndp_msgra_opt_prefix(struct ndp_msgra *msgra);
-uint8_t ndp_msgra_opt_prefix_len(struct ndp_msgra *msgra);
-uint32_t ndp_msgra_opt_prefix_valid_time(struct ndp_msgra *msgra);
-uint32_t ndp_msgra_opt_prefix_preferred_time(struct ndp_msgra *msgra);
-bool ndp_msgra_opt_mtu_present(struct ndp_msgra *msgra);
-uint32_t ndp_msgra_opt_mtu(struct ndp_msgra *msgra);
+int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
+			    enum ndp_msg_opt_type opt_type);
 
-int ndp_msg_new(struct ndp_msg **p_msg, enum ndp_msg_type msg_type);
-void ndp_msg_destroy(struct ndp_msg *msg);
-void *ndp_msg_payload(struct ndp_msg *msg);
-size_t ndp_msg_payload_maxlen(struct ndp_msg *msg);
-size_t ndp_msg_payload_len(struct ndp_msg *msg);
-void ndp_msg_payload_len_set(struct ndp_msg *msg, size_t len);
-void *ndp_msg_payload_opts(struct ndp_msg *msg);
-size_t ndp_msg_payload_opts_len(struct ndp_msg *msg);
-struct ndp_msgrs *ndp_msgrs(struct ndp_msg *msg);
-struct ndp_msgra *ndp_msgra(struct ndp_msg *msg);
-struct ndp_msgns *ndp_msgns(struct ndp_msg *msg);
-struct ndp_msgna *ndp_msgna(struct ndp_msg *msg);
-struct ndp_msgr *ndp_msgr(struct ndp_msg *msg);
-enum ndp_msg_type ndp_msg_type(struct ndp_msg *msg);
-struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg);
-uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
-void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
-int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
+#define ndp_msg_opt_for_each_offset(offset, msg, type)			\
+	for (offset = ndp_msg_next_opt_offset(msg, -1, type);		\
+	     offset != -1;						\
+	     offset = ndp_msg_next_opt_offset(msg, offset, type))
+
+unsigned char *ndp_msg_opt_slladdr(struct ndp_msg *msg, int offset);
+size_t ndp_msg_opt_slladdr_len(struct ndp_msg *msg, int offset);
+unsigned char *ndp_msg_opt_tlladdr(struct ndp_msg *msg, int offset);
+size_t ndp_msg_opt_tlladdr_len(struct ndp_msg *msg, int offset);
+
+struct in6_addr *ndp_msg_opt_prefix(struct ndp_msg *msg, int offset);
+uint8_t ndp_msg_opt_prefix_len(struct ndp_msg *msg, int offset);
+uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset);
+uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset);
+
+uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset);
 
 typedef int (*ndp_msgrcv_handler_func_t)(struct ndp *ndp, struct ndp_msg *msg,
 					 void *priv);

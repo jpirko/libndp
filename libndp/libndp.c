@@ -298,391 +298,6 @@ struct ndp_msgra {
 	} opt_mtu;
 };
 
-/**
- * ndp_msgra_curhoplimit:
- * @msgra: RA message structure
- *
- * Get RA curhoplimit.
- *
- * Returns: curhoplimit.
- **/
-NDP_EXPORT
-uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra)
-{
-	return msgra->ra->nd_ra_curhoplimit;
-}
-
-/**
- * ndp_msgra_curhoplimit_set:
- * @msgra: RA message structure
- *
- * Set RA curhoplimit.
- **/
-NDP_EXPORT
-void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit)
-{
-	msgra->ra->nd_ra_curhoplimit = curhoplimit;
-}
-
-/**
- * ndp_msgra_flag_managed:
- * @msgra: RA message structure
- *
- * Get RA managed flag.
- *
- * Returns: managed flag.
- **/
-NDP_EXPORT
-bool ndp_msgra_flag_managed(struct ndp_msgra *msgra)
-{
-	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED;
-}
-
-/**
- * ndp_msgra_flag_managed_set:
- * @msgra: RA message structure
- *
- * Set RA managed flag.
- **/
-NDP_EXPORT
-void ndp_msgra_flag_managed_set(struct ndp_msgra *msgra, bool flag_managed)
-{
-	if (flag_managed)
-		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_MANAGED;
-	else
-		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_MANAGED;
-}
-
-/**
- * ndp_msgra_flag_other:
- * @msgra: RA message structure
- *
- * Get RA other flag.
- *
- * Returns: other flag.
- **/
-NDP_EXPORT
-bool ndp_msgra_flag_other(struct ndp_msgra *msgra)
-{
-	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER;
-}
-
-/**
- * ndp_msgra_flag_other_set:
- * @msgra: RA message structure
- *
- * Set RA other flag.
- **/
-NDP_EXPORT
-void ndp_msgra_flag_other_set(struct ndp_msgra *msgra, bool flag_other)
-{
-	if (flag_other)
-		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_OTHER;
-	else
-		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_OTHER;
-}
-
-/**
- * ndp_msgra_flag_home_agent:
- * @msgra: RA message structure
- *
- * Get RA home_agent flag.
- *
- * Returns: home_agent flag.
- **/
-NDP_EXPORT
-bool ndp_msgra_flag_home_agent(struct ndp_msgra *msgra)
-{
-	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_HOME_AGENT;
-}
-
-/**
- * ndp_msgra_flag_home_agent_set:
- * @msgra: RA message structure
- *
- * Set RA home_agent flag.
- **/
-NDP_EXPORT
-void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
-				   bool flag_home_agent)
-{
-	if (flag_home_agent)
-		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_HOME_AGENT;
-	else
-		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_HOME_AGENT;
-}
-
-/**
- * ndp_msgra_router_lifetime:
- * @msgra: RA message structure
- *
- * Get RA router lifetime.
- *
- * Returns: router lifetime in seconds.
- **/
-NDP_EXPORT
-uint16_t ndp_msgra_router_lifetime(struct ndp_msgra *msgra)
-{
-	return ntohs(msgra->ra->nd_ra_router_lifetime);
-}
-
-/**
- * ndp_msgra_router_lifetime_set:
- * @msgra: RA message structure
- *
- * Set RA router lifetime.
- **/
-NDP_EXPORT
-void ndp_msgra_router_lifetime_set(struct ndp_msgra *msgra,
-				   uint16_t router_lifetime)
-{
-	msgra->ra->nd_ra_router_lifetime = htons(router_lifetime);
-}
-
-/**
- * ndp_msgra_reachable_time:
- * @msgra: RA message structure
- *
- * Get RA reachable time.
- *
- * Returns: reachable time in milliseconds.
- **/
-NDP_EXPORT
-uint32_t ndp_msgra_reachable_time(struct ndp_msgra *msgra)
-{
-	return ntohl(msgra->ra->nd_ra_reachable);
-}
-
-/**
- * ndp_msgra_reachable_time_set:
- * @msgra: RA message structure
- *
- * Set RA reachable time.
- **/
-NDP_EXPORT
-void ndp_msgra_reachable_time_set(struct ndp_msgra *msgra,
-				  uint32_t reachable_time)
-{
-	msgra->ra->nd_ra_reachable = htonl(reachable_time);
-}
-
-/**
- * ndp_msgra_retransmit_time:
- * @msgra: RA message structure
- *
- * Get RA retransmit time.
- *
- * Returns: retransmit time in milliseconds.
- **/
-NDP_EXPORT
-uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra)
-{
-	return ntohl(msgra->ra->nd_ra_retransmit);
-}
-
-/**
- * ndp_msgra_retransmit_time_set:
- * @msgra: RA message structure
- *
- * Set RA retransmit time.
- **/
-NDP_EXPORT
-void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
-				   uint32_t retransmit_time)
-{
-	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
-}
-
-/**
- * ndp_msgra_opt_source_linkaddr_present:
- * @msgra: RA message structure
- *
- * Find out if source linkaddr option is present.
- *
- * Returns: true if option is present.
- **/
-NDP_EXPORT
-bool ndp_msgra_opt_source_linkaddr_present(struct ndp_msgra *msgra)
-{
-	return msgra->opt_source_linkaddr.present;
-}
-
-/**
- * ndp_msgra_opt_source_linkaddr:
- * @msgra: RA message structure
- *
- * Get source linkaddr. User should check if source linkaddr option is
- * present before calling this.
- *
- * Returns: pointer to source linkaddr.
- **/
-NDP_EXPORT
-unsigned char *ndp_msgra_opt_source_linkaddr(struct ndp_msgra *msgra)
-{
-	return msgra->opt_source_linkaddr.addr;
-}
-
-/**
- * ndp_msgra_opt_source_linkaddr_len:
- * @msgra: RA message structure
- *
- * Get source linkaddr length. User should check if source linkaddr option is
- * present before calling this.
- *
- * Returns: source linkaddr length.
- **/
-NDP_EXPORT
-size_t ndp_msgra_opt_source_linkaddr_len(struct ndp_msgra *msgra)
-{
-	return sizeof(msgra->opt_source_linkaddr.addr);
-}
-
-/**
- * ndp_msgra_opt_target_linkaddr_present:
- * @msgra: RA message structure
- *
- * Find out if target linkaddr option is present.
- *
- * Returns: true if option is present.
- **/
-NDP_EXPORT
-bool ndp_msgra_opt_target_linkaddr_present(struct ndp_msgra *msgra)
-{
-	return msgra->opt_target_linkaddr.present;
-}
-
-/**
- * ndp_msgra_opt_target_linkaddr:
- * @msgra: RA message structure
- *
- * Get target linkaddr. User should check if target linkaddr option is
- * present before calling this.
- *
- * Returns: pointer to target linkaddr.
- **/
-NDP_EXPORT
-unsigned char *ndp_msgra_opt_target_linkaddr(struct ndp_msgra *msgra)
-{
-	return msgra->opt_target_linkaddr.addr;
-}
-
-/**
- * ndp_msgra_opt_target_linkaddr_len:
- * @msgra: RA message structure
- *
- * Get target linkaddr length. User should check if target linkaddr option is
- * present before calling this.
- *
- * Returns: target linkaddr length.
- **/
-NDP_EXPORT
-size_t ndp_msgra_opt_target_linkaddr_len(struct ndp_msgra *msgra)
-{
-	return sizeof(msgra->opt_target_linkaddr.addr);
-}
-
-/**
- * ndp_msgra_opt_prefix_present:
- * @msgra: RA message structure
- *
- * Find out if prefix option is present.
- *
- * Returns: true if option is present.
- **/
-NDP_EXPORT
-bool ndp_msgra_opt_prefix_present(struct ndp_msgra *msgra)
-{
-	return msgra->opt_prefix.present;
-}
-
-/**
- * ndp_msgra_opt_prefix:
- * @msgra: RA message structure
- *
- * Get prefix addr. User should check if prefix option is present before
- * calling this.
- *
- * Returns: pointer to address.
- **/
-NDP_EXPORT
-struct in6_addr *ndp_msgra_opt_prefix(struct ndp_msgra *msgra)
-{
-	return &msgra->opt_prefix.prefix;
-}
-
-/**
- * ndp_msgra_opt_prefix_len:
- * @msgra: RA message structure
- *
- * Get prefix length. User should check if prefix option is present before
- * calling this.
- *
- * Returns: length of prefix.
- **/
-NDP_EXPORT
-uint8_t ndp_msgra_opt_prefix_len(struct ndp_msgra *msgra)
-{
-	return msgra->opt_prefix.prefix_len;
-}
-
-/**
- * ndp_msgra_opt_prefix_valid_time:
- * @msgra: RA message structure
- *
- * Get prefix valid time. User should check if prefix option is present
- * before calling this.
- *
- * Returns: valid time in seconds, (uint32_t) -1 means infinity.
- **/
-NDP_EXPORT
-uint32_t ndp_msgra_opt_prefix_valid_time(struct ndp_msgra *msgra)
-{
-	return msgra->opt_prefix.valid_time;
-}
-
-/**
- * ndp_msgra_opt_prefix_preferred_time:
- * @msgra: RA message structure
- *
- * Get prefix preferred time. User should check if prefix option is present
- * before calling this.
- *
- * Returns: preferred time in seconds, (uint32_t) -1 means infinity.
- **/
-NDP_EXPORT
-uint32_t ndp_msgra_opt_prefix_preferred_time(struct ndp_msgra *msgra)
-{
-	return msgra->opt_prefix.preferred_time;
-}
-
-/**
- * ndp_msgra_opt_mtu_present:
- * @msgra: RA message structure
- *
- * Find out if mtu option is present.
- *
- * Returns: true if option is present.
- **/
-NDP_EXPORT
-bool ndp_msgra_opt_mtu_present(struct ndp_msgra *msgra)
-{
-	return msgra->opt_mtu.present;
-}
-
-/**
- * ndp_msgra_opt_mtu:
- * @msgra: RA message structure
- *
- * Get MTU. User should check if mtu option is present before calling this.
- *
- * Returns: MTU.
- **/
-NDP_EXPORT
-uint32_t ndp_msgra_opt_mtu(struct ndp_msgra *msgra)
-{
-	return msgra->opt_mtu.mtu;
-}
-
 struct ndp_msgns {
 	struct nd_neighbor_solicit *ns; /* must be first */
 };
@@ -930,6 +545,13 @@ void *ndp_msg_payload_opts(struct ndp_msg *msg)
 	return msg->opts_start;
 }
 
+static void *ndp_msg_payload_opts_offset(struct ndp_msg *msg, int offset)
+{
+	unsigned char *ptr = ndp_msg_payload_opts(msg);
+
+	return ptr + offset;
+}
+
 /**
  * ndp_msg_payload_opts_len:
  * @msg: message structure
@@ -1109,64 +731,451 @@ int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 			 &msg->addrto, msg->ifindex);
 }
 
-static void ndp_process_ra_opt(struct ndp_msgra *msgra, unsigned char *opt_data,
-			       uint8_t opt_type, uint8_t opt_len)
+
+/**
+ * SECTION: msgra getters/setters
+ * @short_description: Getters and setters for RA message
+ */
+
+/**
+ * ndp_msgra_curhoplimit:
+ * @msgra: RA message structure
+ *
+ * Get RA curhoplimit.
+ *
+ * Returns: curhoplimit.
+ **/
+NDP_EXPORT
+uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra)
 {
-	if (opt_type == ND_OPT_SOURCE_LINKADDR) {
-		if (opt_len != 8)
-			return; /* unsupported address length */
-		memcpy(msgra->opt_source_linkaddr.addr, &opt_data[2],
-		       sizeof(msgra->opt_source_linkaddr));
-		msgra->opt_source_linkaddr.present = true;
-	} else if (opt_type == ND_OPT_TARGET_LINKADDR) {
-		if (opt_len != 8)
-			return; /* unsupported address length */
-		memcpy(msgra->opt_target_linkaddr.addr, &opt_data[2],
-		       sizeof(msgra->opt_target_linkaddr));
-		msgra->opt_target_linkaddr.present = true;
-	} else if (opt_type == ND_OPT_PREFIX_INFORMATION) {
-		struct nd_opt_prefix_info *pi;
-
-		pi = (struct nd_opt_prefix_info *) opt_data;
-		msgra->opt_prefix.prefix = pi->nd_opt_pi_prefix;
-		msgra->opt_prefix.prefix_len = pi->nd_opt_pi_prefix_len;
-		msgra->opt_prefix.valid_time = ntohl(pi->nd_opt_pi_valid_time);
-		msgra->opt_prefix.preferred_time =
-			ntohl(pi->nd_opt_pi_preferred_time);
-		msgra->opt_prefix.flag_onlink =
-			pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_ONLINK;
-		msgra->opt_prefix.flag_auto =
-			pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_AUTO;
-		msgra->opt_prefix.flag_raddr =
-			pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_RADDR;
-		msgra->opt_prefix.present = true;
-	} else if (opt_type == ND_OPT_MTU) {
-		struct nd_opt_mtu *mtu;
-
-		mtu = (struct nd_opt_mtu *) opt_data;
-		msgra->opt_mtu.mtu = ntohl(mtu->nd_opt_mtu_mtu);
-		msgra->opt_mtu.present = true;
-	}
+	return msgra->ra->nd_ra_curhoplimit;
 }
 
-static void ndp_process_ra(struct ndp *ndp, struct ndp_msg *msg)
+/**
+ * ndp_msgra_curhoplimit_set:
+ * @msgra: RA message structure
+ *
+ * Set RA curhoplimit.
+ **/
+NDP_EXPORT
+void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit)
 {
-	struct ndp_msgra *msgra = ndp_msgra(msg);
-	size_t len = ndp_msg_payload_len(msg);
-	unsigned char *ptr;
+	msgra->ra->nd_ra_curhoplimit = curhoplimit;
+}
 
-	ptr = ndp_msg_payload_opts(msg);
-	len = ndp_msg_payload_opts_len(msg);
-	while (len > 0) {
-		uint8_t opt_type = ptr[0];
-		uint8_t opt_len = ptr[1] << 3; /* convert to bytes */
+/**
+ * ndp_msgra_flag_managed:
+ * @msgra: RA message structure
+ *
+ * Get RA managed flag.
+ *
+ * Returns: managed flag.
+ **/
+NDP_EXPORT
+bool ndp_msgra_flag_managed(struct ndp_msgra *msgra)
+{
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED;
+}
 
-		if (!opt_len || len < opt_len)
-			break;
-		ndp_process_ra_opt(msgra, ptr, opt_type, opt_len);
-		ptr += opt_len;
-		len -= opt_len;
+/**
+ * ndp_msgra_flag_managed_set:
+ * @msgra: RA message structure
+ *
+ * Set RA managed flag.
+ **/
+NDP_EXPORT
+void ndp_msgra_flag_managed_set(struct ndp_msgra *msgra, bool flag_managed)
+{
+	if (flag_managed)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_MANAGED;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_MANAGED;
+}
+
+/**
+ * ndp_msgra_flag_other:
+ * @msgra: RA message structure
+ *
+ * Get RA other flag.
+ *
+ * Returns: other flag.
+ **/
+NDP_EXPORT
+bool ndp_msgra_flag_other(struct ndp_msgra *msgra)
+{
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_OTHER;
+}
+
+/**
+ * ndp_msgra_flag_other_set:
+ * @msgra: RA message structure
+ *
+ * Set RA other flag.
+ **/
+NDP_EXPORT
+void ndp_msgra_flag_other_set(struct ndp_msgra *msgra, bool flag_other)
+{
+	if (flag_other)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_OTHER;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_OTHER;
+}
+
+/**
+ * ndp_msgra_flag_home_agent:
+ * @msgra: RA message structure
+ *
+ * Get RA home_agent flag.
+ *
+ * Returns: home_agent flag.
+ **/
+NDP_EXPORT
+bool ndp_msgra_flag_home_agent(struct ndp_msgra *msgra)
+{
+	return msgra->ra->nd_ra_flags_reserved & ND_RA_FLAG_HOME_AGENT;
+}
+
+/**
+ * ndp_msgra_flag_home_agent_set:
+ * @msgra: RA message structure
+ *
+ * Set RA home_agent flag.
+ **/
+NDP_EXPORT
+void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
+				   bool flag_home_agent)
+{
+	if (flag_home_agent)
+		msgra->ra->nd_ra_flags_reserved |= ND_RA_FLAG_HOME_AGENT;
+	else
+		msgra->ra->nd_ra_flags_reserved &= ~ND_RA_FLAG_HOME_AGENT;
+}
+
+/**
+ * ndp_msgra_router_lifetime:
+ * @msgra: RA message structure
+ *
+ * Get RA router lifetime.
+ *
+ * Returns: router lifetime in seconds.
+ **/
+NDP_EXPORT
+uint16_t ndp_msgra_router_lifetime(struct ndp_msgra *msgra)
+{
+	return ntohs(msgra->ra->nd_ra_router_lifetime);
+}
+
+/**
+ * ndp_msgra_router_lifetime_set:
+ * @msgra: RA message structure
+ *
+ * Set RA router lifetime.
+ **/
+NDP_EXPORT
+void ndp_msgra_router_lifetime_set(struct ndp_msgra *msgra,
+				   uint16_t router_lifetime)
+{
+	msgra->ra->nd_ra_router_lifetime = htons(router_lifetime);
+}
+
+/**
+ * ndp_msgra_reachable_time:
+ * @msgra: RA message structure
+ *
+ * Get RA reachable time.
+ *
+ * Returns: reachable time in milliseconds.
+ **/
+NDP_EXPORT
+uint32_t ndp_msgra_reachable_time(struct ndp_msgra *msgra)
+{
+	return ntohl(msgra->ra->nd_ra_reachable);
+}
+
+/**
+ * ndp_msgra_reachable_time_set:
+ * @msgra: RA message structure
+ *
+ * Set RA reachable time.
+ **/
+NDP_EXPORT
+void ndp_msgra_reachable_time_set(struct ndp_msgra *msgra,
+				  uint32_t reachable_time)
+{
+	msgra->ra->nd_ra_reachable = htonl(reachable_time);
+}
+
+/**
+ * ndp_msgra_retransmit_time:
+ * @msgra: RA message structure
+ *
+ * Get RA retransmit time.
+ *
+ * Returns: retransmit time in milliseconds.
+ **/
+NDP_EXPORT
+uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra)
+{
+	return ntohl(msgra->ra->nd_ra_retransmit);
+}
+
+/**
+ * ndp_msgra_retransmit_time_set:
+ * @msgra: RA message structure
+ *
+ * Set RA retransmit time.
+ **/
+NDP_EXPORT
+void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
+				   uint32_t retransmit_time)
+{
+	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
+}
+
+
+/**
+ * SECTION: msg_opt infrastructure
+ * @short_description: Infrastructure for options
+ */
+
+struct ndp_msg_opt_type_info {
+	uint8_t raw_type;
+};
+
+static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
+{
+	[NDP_MSG_OPT_SLLADDR] = {
+		.raw_type = ND_OPT_SOURCE_LINKADDR,
+	},
+	[NDP_MSG_OPT_TLLADDR] = {
+		.raw_type = ND_OPT_TARGET_LINKADDR,
+	},
+	[NDP_MSG_OPT_PREFIX] = {
+		.raw_type = ND_OPT_PREFIX_INFORMATION,
+	},
+	[NDP_MSG_OPT_REDIR] = {
+		.raw_type = ND_OPT_REDIRECTED_HEADER,
+	},
+	[NDP_MSG_OPT_MTU] = {
+		.raw_type = ND_OPT_MTU,
+	},
+};
+
+#define NDP_MSG_OPT_TYPE_LIST_SIZE ARRAY_SIZE(ndp_msg_opt_type_info_list)
+
+struct ndp_msg_opt_type_info *ndp_msg_opt_type_info(enum ndp_msg_opt_type msg_opt_type)
+{
+	return &ndp_msg_opt_type_info_list[msg_opt_type];
+}
+
+/**
+ * ndp_msg_next_opt_offset:
+ * @msg: message structure
+ * @offset: option payload offset
+ * @opt_type: option type
+ *
+ * Find next offset of option of given type. If offset is -1, start from
+ * beginning, otherwise start from the given offset.
+ * This funstion is internally used by ndp_msg_opt_for_each_offset() macro.
+ *
+ * Returns: offset in opt payload of found opt of -1 in case it was not found.
+ **/
+NDP_EXPORT
+int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
+			    enum ndp_msg_opt_type opt_type)
+{
+	unsigned char *opts_start = ndp_msg_payload_opts(msg);
+	unsigned char *ptr = opts_start;
+	size_t len = ndp_msg_payload_opts_len(msg);
+	uint8_t opt_raw_type = ndp_msg_opt_type_info(opt_type)->raw_type;
+	bool ignore = true;
+
+	if (offset == -1) {
+		offset = 0;
+		ignore = false;
 	}
+
+	ptr += offset;
+	len -= offset;
+	while (len > 0) {
+		uint8_t cur_opt_raw_type = ptr[0];
+		uint8_t cur_opt_len = ptr[1] << 3; /* convert to bytes */
+
+		if (!cur_opt_len || len < cur_opt_len)
+			break;
+		if (cur_opt_raw_type == opt_raw_type && !ignore)
+			return ptr - opts_start;
+		ptr += cur_opt_len;
+		len -= cur_opt_len;
+		ignore = false;
+	}
+	return -1;
+}
+
+
+/**
+ * SECTION: msg_opt getters/setters
+ * @short_description: Getters and setters for options
+ */
+
+/**
+ * ndp_msg_opt_slladdr:
+ * @msg: message structure
+ *
+ * Get source linkaddr.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: pointer to source linkaddr.
+ **/
+NDP_EXPORT
+unsigned char *ndp_msg_opt_slladdr(struct ndp_msg *msg, int offset)
+{
+	unsigned char *opt_data = ndp_msg_payload_opts_offset(msg, offset);
+
+	return &opt_data[2];
+}
+
+/**
+ * ndp_msg_opt_slladdr_len:
+ * @msg: message structure
+ *
+ * Get source linkaddr length.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: source linkaddr length.
+ **/
+NDP_EXPORT
+size_t ndp_msg_opt_slladdr_len(struct ndp_msg *msg, int offset)
+{
+	return ETH_ALEN;
+}
+
+/**
+ * ndp_msg_opt_tlladdr:
+ * @msg: message structure
+ *
+ * Get target linkaddr.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: pointer to target linkaddr.
+ **/
+NDP_EXPORT
+unsigned char *ndp_msg_opt_tlladdr(struct ndp_msg *msg, int offset)
+{
+	unsigned char *opt_data = ndp_msg_payload_opts_offset(msg, offset);
+
+	return &opt_data[2];
+}
+
+/**
+ * ndp_msg_opt_tlladdr_len:
+ * @msg: message structure
+ *
+ * Get target linkaddr length.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: target linkaddr length.
+ **/
+NDP_EXPORT
+size_t ndp_msg_opt_tlladdr_len(struct ndp_msg *msg, int offset)
+{
+	return ETH_ALEN;
+}
+
+/**
+ * ndp_msg_opt_prefix:
+ * @msg: message structure
+ *
+ * Get prefix addr.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: pointer to address.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msg_opt_prefix(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return &pi->nd_opt_pi_prefix;
+}
+
+/**
+ * ndp_msg_opt_prefix_len:
+ * @msg: message structure
+ *
+ * Get prefix length.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: length of prefix.
+ **/
+NDP_EXPORT
+uint8_t ndp_msg_opt_prefix_len(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return pi->nd_opt_pi_prefix_len;
+}
+
+/**
+ * ndp_msg_opt_prefix_valid_time:
+ * @msg: message structure
+ *
+ * Get prefix valid time.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: valid time in seconds, (uint32_t) -1 means infinity.
+ **/
+NDP_EXPORT
+uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return  ntohl(pi->nd_opt_pi_valid_time);
+}
+
+/**
+ * ndp_msg_opt_prefix_preferred_time:
+ * @msg: message structure
+ *
+ * Get prefix preferred time.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: preferred time in seconds, (uint32_t) -1 means infinity.
+ **/
+NDP_EXPORT
+uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ntohl(pi->nd_opt_pi_preferred_time);
+}
+
+/**
+ * ndp_msg_opt_mtu:
+ * @msg: message structure
+ *
+ * Get MTU. User should check if mtu option is present before calling this.
+ *
+ * Returns: MTU.
+ **/
+NDP_EXPORT
+uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_mtu *mtu = ndp_msg_payload_opts_offset(msg, offset);
+
+	return ntohl(mtu->nd_opt_mtu_mtu);
 }
 
 static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);
@@ -1210,9 +1219,6 @@ static int ndp_sock_recv(struct ndp *ndp)
 	}
 	dbg(ndp, "rcvd %s, len: %luB",
 		 ndp_msg_type_info(msg_type)->strabbr, len);
-
-	if (msg->icmp6_hdr->icmp6_type == ND_ROUTER_ADVERT)
-		ndp_process_ra(ndp, msg);
 
 	err = ndp_call_handlers(ndp, msg);;
 
