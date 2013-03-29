@@ -57,9 +57,9 @@ static int run_main_loop(struct ndp *ndp)
 	fd_set rfds_tmp;
 	int fdmax;
 	int ret;
-	struct ndp_eventfd *eventfd;
 	sigset_t mask;
 	int sfd;
+	int ndp_fd;
 	int err = 0;
 
 	sigemptyset(&mask);
@@ -82,13 +82,10 @@ static int run_main_loop(struct ndp *ndp)
 	FD_SET(sfd, &rfds);
 	fdmax = sfd;
 
-	ndp_for_each_event_fd(eventfd, ndp) {
-		int fd = ndp_get_eventfd_fd(ndp, eventfd);
-
-		FD_SET(fd, &rfds);
-		if (fd > fdmax)
-			fdmax = fd;
-	}
+	ndp_fd = ndp_get_eventfd(ndp);
+	FD_SET(ndp_fd, &rfds);
+	if (ndp_fd > fdmax)
+		fdmax = ndp_fd;
 	fdmax++;
 
 	for (;;) {
@@ -121,13 +118,12 @@ static int run_main_loop(struct ndp *ndp)
 			}
 
 		}
-		ndp_for_each_event_fd(eventfd, ndp) {
-			if (FD_ISSET(ndp_get_eventfd_fd(ndp, eventfd), &rfds_tmp))
-				err = ndp_call_eventfd_handler(ndp, eventfd);
-				if (err) {
-					pr_err("ndp eventfd handler call failed\n");
-					return err;
-				}
+		if (FD_ISSET(ndp_fd, &rfds_tmp)) {
+			err = ndp_call_eventfd_handler(ndp);
+			if (err) {
+				pr_err("ndp eventfd handler call failed\n");
+				return err;
+			}
 		}
 	}
 out:

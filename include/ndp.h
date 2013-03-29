@@ -127,15 +127,8 @@ void ndp_msgrcv_handler_unregister(struct ndp *ndp, ndp_msgrcv_handler_func_t fu
 				   enum ndp_msg_type msg_type, uint32_t ifindex,
 				   void *priv);
 
-struct ndp_eventfd;
-
-struct ndp_eventfd *ndp_get_next_eventfd(struct ndp *ndp,
-					 struct ndp_eventfd *eventfd);
-#define ndp_for_each_event_fd(eventfd, ndp)				\
-	for (eventfd = ndp_get_next_eventfd(ndp, NULL); eventfd;	\
-	     eventfd = ndp_get_next_eventfd(ndp, eventfd))
-int ndp_get_eventfd_fd(struct ndp *ndp, struct ndp_eventfd *eventfd);
-int ndp_call_eventfd_handler(struct ndp *ndp, struct ndp_eventfd *eventfd);
+int ndp_get_eventfd(struct ndp *ndp);
+int ndp_call_eventfd_handler(struct ndp *ndp);
 
 int ndp_open(struct ndp **p_ndp);
 void ndp_close(struct ndp *ndp);

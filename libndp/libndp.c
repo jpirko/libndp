@@ -1350,67 +1350,32 @@ void ndp_msgrcv_handler_unregister(struct ndp *ndp, ndp_msgrcv_handler_func_t fu
  * @short_description: event filedescriptor related stuff
  */
 
-struct ndp_eventfd {
-	int (*get_fd)(struct ndp *ndp);
-	int (*event_handler)(struct ndp *ndp);
-};
-
-static int ndp_sock_fd(struct ndp *ndp)
-{
-	return ndp->sock;
-}
-
-static struct ndp_eventfd ndp_eventfd = {
-	.get_fd = ndp_sock_fd,
-	.event_handler = ndp_sock_recv,
-};
-
 /**
- * ndp_get_next_eventfd:
+ * ndp_get_eventfd:
  * @ndp: libndp library context
- * @eventfd: eventfd structure
- *
- * Get next eventfd in list.
- *
- * Returns: eventfd next to @eventfd passed.
- **/
-NDP_EXPORT
-struct ndp_eventfd *ndp_get_next_eventfd(struct ndp *ndp,
-					 struct ndp_eventfd *eventfd)
-{
-	if (eventfd)
-		return NULL;
-	return &ndp_eventfd;
-}
-
-/**
- * ndp_get_eventfd_fd:
- * @ndp: libndp library context
- * @eventfd: eventfd structure
  *
  * Get eventfd filedesctiptor.
  *
  * Returns: fd.
  **/
 NDP_EXPORT
-int ndp_get_eventfd_fd(struct ndp *ndp, struct ndp_eventfd *eventfd)
+int ndp_get_eventfd(struct ndp *ndp)
 {
-	return eventfd->get_fd(ndp);
+	return ndp->sock;
 }
 
 /**
  * ndp_call_eventfd_handler:
  * @ndp: libndp library context
- * @eventfd: eventfd structure
  *
  * Call eventfd handler.
  *
  * Returns: zero on success or negative number in case of an error.
  **/
 NDP_EXPORT
-int ndp_call_eventfd_handler(struct ndp *ndp, struct ndp_eventfd *eventfd)
+int ndp_call_eventfd_handler(struct ndp *ndp)
 {
-	return eventfd->event_handler(ndp);
+	return ndp_sock_recv(ndp);
 }
 
 
