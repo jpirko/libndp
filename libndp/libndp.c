@@ -958,6 +958,7 @@ void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 
 struct ndp_msg_opt_type_info {
 	uint8_t raw_type;
+	size_t raw_struct_size;
 };
 
 static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
@@ -970,15 +971,18 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 	},
 	[NDP_MSG_OPT_PREFIX] = {
 		.raw_type = ND_OPT_PREFIX_INFORMATION,
+		.raw_struct_size = sizeof(struct nd_opt_prefix_info),
 	},
 	[NDP_MSG_OPT_REDIR] = {
 		.raw_type = ND_OPT_REDIRECTED_HEADER,
 	},
 	[NDP_MSG_OPT_MTU] = {
 		.raw_type = ND_OPT_MTU,
+		.raw_struct_size = sizeof(struct nd_opt_mtu),
 	},
 	[NDP_MSG_OPT_ROUTE] = {
 		.raw_type = __ND_OPT_ROUTE_INFO,
+		.raw_struct_size = sizeof(struct __nd_opt_route_info),
 	},
 };
 
@@ -987,6 +991,19 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 struct ndp_msg_opt_type_info *ndp_msg_opt_type_info(enum ndp_msg_opt_type msg_opt_type)
 {
 	return &ndp_msg_opt_type_info_list[msg_opt_type];
+}
+
+struct ndp_msg_opt_type_info *ndp_msg_opt_type_info_by_raw_type(uint8_t raw_type)
+{
+	struct ndp_msg_opt_type_info *info;
+	int i;
+
+	for (i = 0; i < NDP_MSG_OPT_TYPE_LIST_SIZE; i++) {
+		info = &ndp_msg_opt_type_info_list[i];
+		if (info->raw_type == raw_type)
+			return info;
+	}
+	return NULL;
 }
 
 /**
@@ -1033,6 +1050,34 @@ int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
 	return -1;
 }
 
+#define __INVALID_OPT_TYPE_MAGIC 0xff
+
+/*
+ * Check for validity of options and mark by magic opt type in case it is not
+ * so ndp_msg_next_opt_offset() will ignore it.
+ */
+static void ndp_msg_check_opts(struct ndp_msg *msg)
+{
+	unsigned char *ptr = ndp_msg_payload_opts(msg);
+	size_t len = ndp_msg_payload_opts_len(msg);
+	struct ndp_msg_opt_type_info *info;
+
+	while (len > 0) {
+		uint8_t cur_opt_raw_type = ptr[0];
+		uint8_t cur_opt_len = ptr[1] << 3; /* convert to bytes */
+
+		if (!cur_opt_len || len < cur_opt_len)
+			break;
+		info = ndp_msg_opt_type_info_by_raw_type(cur_opt_raw_type);
+		if (info) {
+			if (info->raw_struct_size &&
+			    cur_opt_len < info->raw_struct_size)
+				ptr[0] = __INVALID_OPT_TYPE_MAGIC;
+		}
+		ptr += cur_opt_len;
+		len -= cur_opt_len;
+	}
+}
 
 /**
  * SECTION: msg_opt getters/setters
@@ -1320,6 +1365,8 @@ static int ndp_sock_recv(struct ndp *ndp)
 	}
 	dbg(ndp, "rcvd %s, len: %luB",
 		 ndp_msg_type_info(msg_type)->strabbr, len);
+
+	ndp_msg_check_opts(msg);
 
 	err = ndp_call_handlers(ndp, msg);;
 
