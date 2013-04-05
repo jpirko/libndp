@@ -176,6 +176,7 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 			*ifindex = pktinfo->ipi6_ifindex;
 		}
 	}
+	*addr = sin6.sin6_addr;
 
 	return 0;
 }
