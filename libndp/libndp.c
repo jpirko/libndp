@@ -275,28 +275,6 @@ struct ndp_msgrs {
 
 struct ndp_msgra {
 	struct nd_router_advert *ra; /* must be first */
-	struct {
-		bool		present;
-		unsigned char	addr[ETH_ALEN];
-	} opt_source_linkaddr;
-	struct {
-		bool		present;
-		unsigned char	addr[ETH_ALEN];
-	} opt_target_linkaddr;
-	struct {
-		bool		present;
-		struct in6_addr	prefix;
-		uint8_t		prefix_len;
-		uint32_t	valid_time;
-		uint32_t	preferred_time;
-		bool		flag_onlink;
-		bool		flag_auto;
-		bool		flag_raddr;
-	} opt_prefix;
-	struct {
-		bool		present;
-		uint32_t	mtu;
-	} opt_mtu;
 };
 
 struct ndp_msgns {
