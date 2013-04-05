@@ -86,6 +86,9 @@ void ndp_msgra_flag_other_set(struct ndp_msgra *msgra, bool flag_other);
 bool ndp_msgra_flag_home_agent(struct ndp_msgra *msgra);
 void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
 				   bool flag_home_agent);
+enum ndp_route_preference ndp_msgra_route_preference(struct ndp_msgra *msgra);
+void ndp_msgra_route_preference_set(struct ndp_msgra *msgra,
+				    enum ndp_route_preference pref);
 uint16_t ndp_msgra_router_lifetime(struct ndp_msgra *msgra);
 void ndp_msgra_router_lifetime_set(struct ndp_msgra *msgra,
 				   uint16_t router_lifetime);

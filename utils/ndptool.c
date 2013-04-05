@@ -164,6 +164,21 @@ static void pr_out_hwaddr(unsigned char *hwaddr, size_t len)
 	pr_out("\n");
 }
 
+static void pr_out_route_preference(enum ndp_route_preference pref)
+{
+	switch (pref) {
+	case NDP_ROUTE_PREF_LOW:
+		pr_out("low");
+		break;
+	case NDP_ROUTE_PREF_MEDIUM:
+		pr_out("medium");
+		break;
+	case NDP_ROUTE_PREF_HIGH:
+		pr_out("high");
+		break;
+	}
+}
+
 static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 {
 	char ifname[IF_NAMESIZE];
@@ -185,6 +200,9 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 		       ndp_msgra_flag_managed(msgra) ? "yes" : "no");
 		pr_out("  Other configuration: %s\n",
 		       ndp_msgra_flag_other(msgra) ? "yes" : "no");
+		pr_out("  Default router preference: ");
+		pr_out_route_preference(ndp_msgra_route_preference(msgra));
+		pr_out("\n");
 		pr_out("  Router lifetime: %us\n",
 		       ndp_msgra_router_lifetime(msgra));
 		pr_out("  Reachable time: ");
@@ -248,17 +266,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			else
 				pr_out("%us", lifetime);
 			pr_out(", preference: ");
-			switch (ndp_msg_opt_route_preference(msg, offset)) {
-			case NDP_ROUTE_PREF_LOW:
-				pr_out("low");
-				break;
-			case NDP_ROUTE_PREF_MEDIUM:
-				pr_out("medium");
-				break;
-			case NDP_ROUTE_PREF_HIGH:
-				pr_out("high");
-				break;
-			}
+			pr_out_route_preference(ndp_msg_opt_route_preference(msg, offset));
 			pr_out("\n");
 		}
 	} else if (msg_type == NDP_MSG_NS) {

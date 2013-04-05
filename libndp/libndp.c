@@ -853,6 +853,45 @@ void ndp_msgra_flag_home_agent_set(struct ndp_msgra *msgra,
 }
 
 /**
+ * ndp_msgra_route_preference:
+ * @msgra: RA message structure
+ *
+ * Get route preference.
+ *
+ * Returns: route preference.
+ **/
+NDP_EXPORT
+enum ndp_route_preference ndp_msgra_route_preference(struct ndp_msgra *msgra)
+{
+	uint8_t prf = (msgra->ra->nd_ra_flags_reserved >> 3) & 3;
+
+	/* rfc4191 says:
+	 * If the Router Lifetime is zero, the preference value MUST be set to
+	 * (00) by the sender and MUST be ignored by the receiver.
+	 * If the Reserved (10) value is received, the receiver MUST treat the
+	 * value as if it were (00).
+	 */
+	if (prf == 2 || !ndp_msgra_router_lifetime(msgra))
+		prf = 0;
+	return prf;
+}
+
+/**
+ * ndp_msgra_route_preference_set:
+ * @msgra: RA message structure
+ * @pref: preference
+ *
+ * Set route preference.
+ **/
+NDP_EXPORT
+void ndp_msgra_route_preference_set(struct ndp_msgra *msgra,
+				    enum ndp_route_preference pref)
+{
+	msgra->ra->nd_ra_flags_reserved &= ~(3 << 3);
+	msgra->ra->nd_ra_flags_reserved |= (pref << 3);
+}
+
+/**
  * ndp_msgra_router_lifetime:
  * @msgra: RA message structure
  *
