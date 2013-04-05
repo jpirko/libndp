@@ -960,6 +960,9 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 	[NDP_MSG_OPT_MTU] = {
 		.raw_type = ND_OPT_MTU,
 	},
+	[NDP_MSG_OPT_ROUTE] = {
+		.raw_type = __ND_OPT_ROUTE_INFO,
+	},
 };
 
 #define NDP_MSG_OPT_TYPE_LIST_SIZE ARRAY_SIZE(ndp_msg_opt_type_info_list)
@@ -1141,7 +1144,7 @@ uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset)
 	struct nd_opt_prefix_info *pi =
 			ndp_msg_payload_opts_offset(msg, offset);
 
-	return  ntohl(pi->nd_opt_pi_valid_time);
+	return ntohl(pi->nd_opt_pi_valid_time);
 }
 
 /**
@@ -1177,6 +1180,86 @@ uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset)
 	struct nd_opt_mtu *mtu = ndp_msg_payload_opts_offset(msg, offset);
 
 	return ntohl(mtu->nd_opt_mtu_mtu);
+}
+
+/**
+ * ndp_msg_opt_route_prefix:
+ * @msg: message structure
+ *
+ * Get route prefix addr.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: address.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msg_opt_route_prefix(struct ndp_msg *msg, int offset)
+{
+	static struct in6_addr prefix;
+	struct __nd_opt_route_info *ri =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	memset(&prefix, 0, sizeof(prefix));
+	memcpy(&prefix, &ri->nd_opt_ri_prefix, (ri->nd_opt_ri_len - 1) << 3);
+	return &prefix;
+}
+
+/**
+ * ndp_msg_opt_route_prefix_len:
+ * @msg: message structure
+ *
+ * Get route prefix length.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: length of route prefix.
+ **/
+NDP_EXPORT
+uint8_t ndp_msg_opt_route_prefix_len(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_route_info *ri =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ri->nd_opt_ri_prefix_len;
+}
+
+/**
+ * ndp_msg_opt_route_lifetime:
+ * @msg: message structure
+ *
+ * Get route lifetime.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: route lifetime in seconds, (uint32_t) -1 means infinity.
+ **/
+NDP_EXPORT
+uint32_t ndp_msg_opt_route_lifetime(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_route_info *ri =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ntohl(ri->nd_opt_ri_lifetime);
+}
+
+/**
+ * ndp_msg_opt_route_preference:
+ * @msg: message structure
+ *
+ * Get route preference.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: route preference.
+ **/
+NDP_EXPORT
+enum ndp_route_preference
+ndp_msg_opt_route_preference(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_route_info *ri =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return (ri->nd_opt_ri_prf_reserved >> 3) & 3;
 }
 
 static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);

@@ -235,6 +235,32 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 		}
 		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_MTU)
 			pr_out("  MTU: %u\n", ndp_msg_opt_mtu(msg, offset));
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_ROUTE) {
+			uint32_t lifetime;
+
+			lifetime = ndp_msg_opt_route_lifetime(msg, offset);
+			pr_out("  Route: %s/%u",
+			       str_in6_addr(ndp_msg_opt_route_prefix(msg, offset)),
+			       ndp_msg_opt_route_prefix_len(msg, offset));
+			pr_out(", lifetime: ");
+			if (lifetime == (uint32_t) -1)
+				pr_out("infinity");
+			else
+				pr_out("%us", lifetime);
+			pr_out(", preference: ");
+			switch (ndp_msg_opt_route_preference(msg, offset)) {
+			case NDP_ROUTE_PREF_LOW:
+				pr_out("low");
+				break;
+			case NDP_ROUTE_PREF_MEDIUM:
+				pr_out("medium");
+				break;
+			case NDP_ROUTE_PREF_HIGH:
+				pr_out("high");
+				break;
+			}
+			pr_out("\n");
+		}
 	} else if (msg_type == NDP_MSG_NS) {
 		pr_out("  Type: NS\n");
 	} else if (msg_type == NDP_MSG_NA) {

@@ -78,8 +78,19 @@ ndp_log_null(struct ndp *ndp, const char *format, ...) {}
 #endif
 
 /**
- * SECTION: function prototypes
- * @short_description: prototypes for internal functions
+ * SECTION: netinet/icmp6.h addendum
+ * @short_description: defines and structs missing from netinet/icmp6.h
  */
+
+#define __ND_OPT_ROUTE_INFO 24 /* rfc4191 */
+
+struct __nd_opt_route_info { /* route information */
+	uint8_t		nd_opt_ri_type;
+	uint8_t		nd_opt_ri_len;
+	uint8_t		nd_opt_ri_prefix_len;
+	uint8_t		nd_opt_ri_prf_reserved;
+	uint32_t	nd_opt_ri_lifetime;
+	char		nd_opt_ri_prefix[0];
+};
 
 #endif /* _NDP_PRIVATE_H_ */

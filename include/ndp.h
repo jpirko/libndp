@@ -52,6 +52,12 @@ enum ndp_msg_type {
 	NDP_MSG_ALL, /* Matches all */
 };
 
+enum ndp_route_preference {
+	NDP_ROUTE_PREF_LOW = 3,
+	NDP_ROUTE_PREF_MEDIUM = 0,
+	NDP_ROUTE_PREF_HIGH = 1,
+};
+
 int ndp_msg_new(struct ndp_msg **p_msg, enum ndp_msg_type msg_type);
 void ndp_msg_destroy(struct ndp_msg *msg);
 void *ndp_msg_payload(struct ndp_msg *msg);
@@ -96,6 +102,7 @@ enum ndp_msg_opt_type {
 	NDP_MSG_OPT_PREFIX, /* Prefix Information */
 	NDP_MSG_OPT_REDIR, /* Redirected Header */
 	NDP_MSG_OPT_MTU, /* MTU */
+	NDP_MSG_OPT_ROUTE, /* Route Information */
 };
 
 int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
@@ -117,6 +124,12 @@ uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset);
 uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset);
 
 uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset);
+
+struct in6_addr *ndp_msg_opt_route_prefix(struct ndp_msg *msg, int offset);
+uint8_t ndp_msg_opt_route_prefix_len(struct ndp_msg *msg, int offset);
+uint32_t ndp_msg_opt_route_lifetime(struct ndp_msg *msg, int offset);
+enum ndp_route_preference
+ndp_msg_opt_route_preference(struct ndp_msg *msg, int offset);
 
 typedef int (*ndp_msgrcv_handler_func_t)(struct ndp *ndp, struct ndp_msg *msg,
 					 void *priv);
