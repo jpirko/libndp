@@ -969,7 +969,21 @@ void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 struct ndp_msg_opt_type_info {
 	uint8_t raw_type;
 	size_t raw_struct_size;
+	bool (*check_valid)(void *opt_data);
 };
+
+static bool ndp_msg_opt_route_check_valid(void *opt_data)
+{
+	struct __nd_opt_route_info *ri = opt_data;
+
+	/* rfc4191 says:
+	 * If the Reserved (10) value is received, the Route Information Option
+	 * MUST be ignored.
+	 */
+	if (((ri->nd_opt_ri_prf_reserved >> 3) & 3) == 2)
+		return false;
+	return true;
+}
 
 static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 {
@@ -993,6 +1007,7 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 	[NDP_MSG_OPT_ROUTE] = {
 		.raw_type = __ND_OPT_ROUTE_INFO,
 		.raw_struct_size = sizeof(struct __nd_opt_route_info),
+		.check_valid = ndp_msg_opt_route_check_valid,
 	},
 };
 
@@ -1080,8 +1095,8 @@ static void ndp_msg_check_opts(struct ndp_msg *msg)
 			break;
 		info = ndp_msg_opt_type_info_by_raw_type(cur_opt_raw_type);
 		if (info) {
-			if (info->raw_struct_size &&
-			    cur_opt_len < info->raw_struct_size)
+			if (cur_opt_len < info->raw_struct_size ||
+			    (info->check_valid && !info->check_valid(ptr)))
 				ptr[0] = __INVALID_OPT_TYPE_MAGIC;
 		}
 		ptr += cur_opt_len;
