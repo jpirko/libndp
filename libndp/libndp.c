@@ -392,6 +392,16 @@ static int ndp_msg_type_by_raw_type(enum ndp_msg_type *p_msg_type,
 	return -ENOENT;
 }
 
+static bool ndp_msg_check_valid(struct ndp_msg *msg)
+{
+	size_t len = ndp_msg_payload_len(msg);
+	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+
+	if (len < ndp_msg_type_info(msg_type)->raw_struct_size)
+		return false;
+	return true;
+}
+
 static struct ndp_msg *ndp_msg_alloc(void)
 {
 	struct ndp_msg *msg;
@@ -1358,11 +1368,12 @@ static int ndp_sock_recv(struct ndp *ndp)
 	ndp_msg_init(msg, msg_type);
 	ndp_msg_payload_len_set(msg, len);
 
-	if (len < ndp_msg_type_info(msg_type)->raw_struct_size) {
-		warn(ndp, "rcvd %s packet too short (%luB)",
-			  ndp_msg_type_info(msg_type)->strabbr, len);
-		return 0;
+	if (!ndp_msg_check_valid(msg)) {
+		warn(ndp, "rcvd invalid ND message");
+		err = 0;
+		goto free_msg;
 	}
+
 	dbg(ndp, "rcvd %s, len: %luB",
 		 ndp_msg_type_info(msg_type)->strabbr, len);
 
