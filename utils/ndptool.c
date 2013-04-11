@@ -269,6 +269,25 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			pr_out_route_preference(ndp_msg_opt_route_preference(msg, offset));
 			pr_out("\n");
 		}
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_RDNSS) {
+			static struct in6_addr *addr;
+			int addr_index;
+			uint32_t lifetime;
+
+			lifetime = ndp_msg_opt_rdnss_lifetime(msg, offset);
+			pr_out("  Recursive DNS Servers: ");
+			ndp_msg_opt_rdnss_for_each_addr(addr, addr_index, msg, offset) {
+				if (addr_index != 0)
+					pr_out(", ");
+				pr_out("%s", str_in6_addr(addr));
+			}
+			pr_out(", lifetime: ");
+			if (lifetime == (uint32_t) -1)
+				pr_out("infinity");
+			else
+				pr_out("%us", lifetime);
+			pr_out("\n");
+		}
 	} else if (msg_type == NDP_MSG_NS) {
 		pr_out("  Type: NS\n");
 	} else if (msg_type == NDP_MSG_NA) {

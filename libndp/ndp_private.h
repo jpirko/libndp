@@ -83,6 +83,7 @@ ndp_log_null(struct ndp *ndp, const char *format, ...) {}
  */
 
 #define __ND_OPT_ROUTE_INFO 24 /* rfc4191 */
+#define __ND_OPT_RDNSS 25 /* rfc6106 */
 
 struct __nd_opt_route_info { /* route information */
 	uint8_t		nd_opt_ri_type;
@@ -91,6 +92,14 @@ struct __nd_opt_route_info { /* route information */
 	uint8_t		nd_opt_ri_prf_reserved;
 	uint32_t	nd_opt_ri_lifetime;
 	char		nd_opt_ri_prefix[0];
+};
+
+struct __nd_opt_rdnss { /* Recursive DNS Server */
+	uint8_t		nd_opt_rdnss_type;
+	uint8_t		nd_opt_rdnss_len;
+	uint16_t	nd_opt_rdnss_reserved;
+	uint32_t	nd_opt_rdnss_lifetime;
+	char		nd_opt_rdnss_addresses[0];
 };
 
 #endif /* _NDP_PRIVATE_H_ */
