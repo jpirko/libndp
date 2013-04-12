@@ -1013,6 +1013,10 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 		.raw_type = __ND_OPT_RDNSS,
 		.raw_struct_size = sizeof(struct __nd_opt_rdnss),
 	},
+	[NDP_MSG_OPT_DNSSL] = {
+		.raw_type = __ND_OPT_DNSSL,
+		.raw_struct_size = sizeof(struct __nd_opt_dnssl),
+	},
 };
 
 #define NDP_MSG_OPT_TYPE_LIST_SIZE ARRAY_SIZE(ndp_msg_opt_type_info_list)
@@ -1413,6 +1417,81 @@ struct in6_addr *ndp_msg_opt_rdnss_addr(struct ndp_msg *msg, int offset,
 	memcpy(&addr, &rdnss->nd_opt_rdnss_addresses[addr_index * sizeof(addr)],
 	       sizeof(addr));
 	return &addr;
+}
+
+/**
+ * ndp_msg_opt_dnssl_lifetime:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get DNS Search List lifetime.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: route lifetime in seconds, (uint32_t) -1 means infinity.
+ **/
+NDP_EXPORT
+uint32_t ndp_msg_opt_dnssl_lifetime(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_dnssl *dnssl =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ntohl(dnssl->nd_opt_dnssl_lifetime);
+}
+
+/**
+ * ndp_msg_opt_dnssl_domain:
+ * @msg: message structure
+ * @offset: in-message offset
+ * @domain_index: domain index
+ *
+ * Get DNS Search List domain.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: address.
+ **/
+NDP_EXPORT
+char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
+			       int domain_index)
+{
+	int i;
+	static char buf[256];
+	struct __nd_opt_dnssl *dnssl =
+			ndp_msg_payload_opts_offset(msg, offset);
+	size_t len = dnssl->nd_opt_dnssl_len << 3; /* convert to bytes */
+	char *ptr;
+
+	len -= in_struct_offset(struct __nd_opt_dnssl, nd_opt_dnssl_domains);
+	ptr = dnssl->nd_opt_dnssl_domains;
+
+	i = 0;
+	while (len > 0) {
+		*buf = '\0';
+		while (len > 0) {
+			uint8_t dom_len = *ptr;
+
+			ptr++;
+			len--;
+			if (!dom_len)
+				break;
+
+			if (dom_len > len)
+				return NULL;
+
+			if (strlen(buf))
+				sprintf(buf, "%s.", buf);
+			buf[strlen(buf) + dom_len] = '\0';
+			memcpy(buf + strlen(buf), ptr, dom_len);
+			ptr += dom_len;
+			len -= dom_len;
+		}
+		if (!strlen(buf))
+			break;
+		if (i++ == domain_index)
+			return buf;
+	}
+	return NULL;
 }
 
 static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);

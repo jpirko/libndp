@@ -107,6 +107,7 @@ enum ndp_msg_opt_type {
 	NDP_MSG_OPT_MTU, /* MTU */
 	NDP_MSG_OPT_ROUTE, /* Route Information */
 	NDP_MSG_OPT_RDNSS, /* Recursive DNS Server */
+	NDP_MSG_OPT_DNSSL, /* DNS Search List */
 };
 
 int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
@@ -144,6 +145,16 @@ struct in6_addr *ndp_msg_opt_rdnss_addr(struct ndp_msg *msg, int offset,
 	     addr = ndp_msg_opt_rdnss_addr(msg, offset, addr_index);	\
 	     addr;							\
 	     addr = ndp_msg_opt_rdnss_addr(msg, offset, ++addr_index))
+
+uint32_t ndp_msg_opt_dnssl_lifetime(struct ndp_msg *msg, int offset);
+char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
+			       int domain_index);
+
+#define ndp_msg_opt_dnssl_for_each_domain(domain, domain_index, msg, offset)	\
+	for (domain_index = 0,							\
+	     domain = ndp_msg_opt_dnssl_domain(msg, offset, domain_index);	\
+	     domain;								\
+	     domain = ndp_msg_opt_dnssl_domain(msg, offset, ++domain_index))
 
 typedef int (*ndp_msgrcv_handler_func_t)(struct ndp *ndp, struct ndp_msg *msg,
 					 void *priv);

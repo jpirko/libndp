@@ -288,6 +288,25 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 				pr_out("%us", lifetime);
 			pr_out("\n");
 		}
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_DNSSL) {
+			char *domain;
+			int domain_index;
+			uint32_t lifetime;
+
+			lifetime = ndp_msg_opt_rdnss_lifetime(msg, offset);
+			pr_out("  DNS Search List: ");
+			ndp_msg_opt_dnssl_for_each_domain(domain, domain_index, msg, offset) {
+				if (domain_index != 0)
+					pr_out(" ");
+				pr_out("%s", domain);
+			}
+			pr_out(", lifetime: ");
+			if (lifetime == (uint32_t) -1)
+				pr_out("infinity");
+			else
+				pr_out("%us", lifetime);
+			pr_out("\n");
+		}
 	} else if (msg_type == NDP_MSG_NS) {
 		pr_out("  Type: NS\n");
 	} else if (msg_type == NDP_MSG_NA) {
