@@ -1116,6 +1116,7 @@ static void ndp_msg_check_opts(struct ndp_msg *msg)
 /**
  * ndp_msg_opt_slladdr:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get source linkaddr.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1134,6 +1135,7 @@ unsigned char *ndp_msg_opt_slladdr(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_slladdr_len:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get source linkaddr length.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1150,6 +1152,7 @@ size_t ndp_msg_opt_slladdr_len(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_tlladdr:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get target linkaddr.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1168,6 +1171,7 @@ unsigned char *ndp_msg_opt_tlladdr(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_tlladdr_len:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get target linkaddr length.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1184,6 +1188,7 @@ size_t ndp_msg_opt_tlladdr_len(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_prefix:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get prefix addr.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1203,6 +1208,7 @@ struct in6_addr *ndp_msg_opt_prefix(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_prefix_len:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get prefix length.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1222,6 +1228,7 @@ uint8_t ndp_msg_opt_prefix_len(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_prefix_valid_time:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get prefix valid time.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1241,6 +1248,7 @@ uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_prefix_preferred_time:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get prefix preferred time.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1260,6 +1268,7 @@ uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_mtu:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get MTU. User should check if mtu option is present before calling this.
  *
@@ -1276,6 +1285,7 @@ uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_route_prefix:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get route prefix addr.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1298,6 +1308,7 @@ struct in6_addr *ndp_msg_opt_route_prefix(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_route_prefix_len:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get route prefix length.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1317,6 +1328,7 @@ uint8_t ndp_msg_opt_route_prefix_len(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_route_lifetime:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get route lifetime.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1336,6 +1348,7 @@ uint32_t ndp_msg_opt_route_lifetime(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_route_preference:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get route preference.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
@@ -1356,6 +1369,7 @@ ndp_msg_opt_route_preference(struct ndp_msg *msg, int offset)
 /**
  * ndp_msg_opt_rdnss_lifetime:
  * @msg: message structure
+ * @offset: in-message offset
  *
  * Get Recursive DNS Server lifetime.
  * User should use this function only inside ndp_msg_opt_for_each_offset()
