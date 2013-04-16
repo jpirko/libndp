@@ -136,9 +136,9 @@ static void print_help(const char *argv0) {
             "%s [options] command\n"
             "\t-h --help                Show this help\n"
             "\t-v --verbose             Increase output verbosity\n"
-            "\t-t --msg_type=TYPE       Specified message type\n"
-            "\t-i --ifname=IFNAME       Specified interface name\n"
+            "\t-t --msg-type=TYPE       Specify message type\n"
 	    "\t                         (\"rs\", \"ra\", \"ns\", \"na\")\n"
+            "\t-i --ifname=IFNAME       Specify interface name\n"
 	    "Available commands:\n"
 	    "\tmonitor\n"
 	    "\tsend\n",
@@ -377,7 +377,7 @@ int main(int argc, char **argv)
 	static const struct option long_options[] = {
 		{ "help",	no_argument,		NULL, 'h' },
 		{ "verbose",	no_argument,		NULL, 'v' },
-		{ "msg_type",	required_argument,	NULL, 't' },
+		{ "msg-type",	required_argument,	NULL, 't' },
 		{ "ifname",	required_argument,	NULL, 'i' },
 		{ NULL, 0, NULL, 0 }
 	};

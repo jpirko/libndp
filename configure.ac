@@ -58,5 +58,6 @@ AC_CONFIG_FILES([Makefile
 include/Makefile \
 libndp/Makefile \
 libndp/libndp.pc \
-utils/Makefile])
+utils/Makefile \
+man/Makefile])
 AC_OUTPUT

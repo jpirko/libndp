@@ -1,0 +1,55 @@
+.TH ndptool 8 "16 April 2013" "libndp"
+.SH NAME
+ndptool \(em Neighbor Discovery Protocol tool
+.SH SYNOPSIS
+.B ndptool
+.B \-h
+.TP
+.B ndptool [OPTIONS] COMMAND
+.TP
+.SH DESCRIPTION
+.PP
+ndptool is a tool which provides wrapper over Neighbor Discovery Protocol
+messages.
+
+.SH OPTIONS
+.TP
+.B "\-h, \-\-help"
+Print help text to console and exit.
+
+.TP
+.B "\-v, \-\-verbose"
+Increase output verbosity.
+
+.TP
+.B "\-t type, \-\-msg-type type"
+Specified message type. Following are supported:
+
+.BR "rs "-
+Router Solicitation.
+
+.BR "ra "-
+Router Advertisement.
+
+.BR "ns "-
+Neighbor Solicitation.
+
+.BR "na "-
+Neighbor Advertisement.
+
+.TP
+.B "\-i ifname, \-\-ifname ifname"
+Specified interface name.
+
+.SH COMMAND
+.TP
+.B "monitor"
+Monitor incoming NDP messages and print them out.
+
+.TP
+.B "send"
+Send NDP message of specified type.
+
+.SH AUTHOR
+.PP
+Jiri Pirko is the original author and current maintainer of libndp.
