@@ -13,4 +13,4 @@ libndp_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LIBNDP_CURRENT@:@LIBNDP_REVISIO
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libndp.pc
 
-EXTRA_DIST = ndp_private.h
+EXTRA_DIST = ndp_private.h list.h
