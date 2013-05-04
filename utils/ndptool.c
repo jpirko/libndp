@@ -194,7 +194,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 	int offset;
 
 	if_indextoname(ndp_msg_ifindex(msg), ifname);
-	pr_out("NDP payload len %lu, from addr: %s, iface: %s\n",
+	pr_out("NDP payload len %zu, from addr: %s, iface: %s\n",
 	       ndp_msg_payload_len(msg),
 	       str_in6_addr(ndp_msg_addrto(msg)), ifname);
 	if (msg_type == NDP_MSG_RS) {

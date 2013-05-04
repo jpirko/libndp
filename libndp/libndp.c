@@ -1534,7 +1534,7 @@ static int ndp_sock_recv(struct ndp *ndp)
 		goto free_msg;
 	}
 
-	dbg(ndp, "rcvd %s, len: %luB",
+	dbg(ndp, "rcvd %s, len: %zuB",
 		 ndp_msg_type_info(msg_type)->strabbr, len);
 
 	ndp_msg_check_opts(msg);
