@@ -197,11 +197,6 @@ resend:
 		switch(errno) {
 		case EINTR:
 			goto resend;
-		case ENETDOWN:
-		case ENETUNREACH:
-		case EADDRNOTAVAIL:
-		case ENXIO:
-			return 0;
 		default:
 			return -errno;
 		}
