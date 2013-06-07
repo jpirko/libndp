@@ -167,6 +167,7 @@ void ndp_msgrcv_handler_unregister(struct ndp *ndp, ndp_msgrcv_handler_func_t fu
 
 int ndp_get_eventfd(struct ndp *ndp);
 int ndp_call_eventfd_handler(struct ndp *ndp);
+int ndp_callall_eventfd_handler(struct ndp *ndp);
 
 int ndp_open(struct ndp **p_ndp);
 void ndp_close(struct ndp *ndp);
