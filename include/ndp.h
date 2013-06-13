@@ -127,6 +127,9 @@ struct in6_addr *ndp_msg_opt_prefix(struct ndp_msg *msg, int offset);
 uint8_t ndp_msg_opt_prefix_len(struct ndp_msg *msg, int offset);
 uint32_t ndp_msg_opt_prefix_valid_time(struct ndp_msg *msg, int offset);
 uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset);
+bool ndp_msg_opt_prefix_flag_on_link(struct ndp_msg *msg, int offset);
+bool ndp_msg_opt_prefix_flag_auto_addr_conf(struct ndp_msg *msg, int offset);
+bool ndp_msg_opt_prefix_flag_router_addr(struct ndp_msg *msg, int offset);
 
 uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset);
 

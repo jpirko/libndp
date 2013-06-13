@@ -1266,6 +1266,66 @@ uint32_t ndp_msg_opt_prefix_preferred_time(struct ndp_msg *msg, int offset)
 }
 
 /**
+ * ndp_msg_opt_prefix_flag_on_link:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get on-link flag.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: on-link flag.
+ **/
+NDP_EXPORT
+bool ndp_msg_opt_prefix_flag_on_link(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_ONLINK;
+}
+
+/**
+ * ndp_msg_opt_prefix_flag_auto_addr_conf:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get autonomous address-configuration flag.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: autonomous address-configuration flag.
+ **/
+NDP_EXPORT
+bool ndp_msg_opt_prefix_flag_auto_addr_conf(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_AUTO;
+}
+
+/**
+ * ndp_msg_opt_prefix_flag_router_addr:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get router address flag.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: router address flag.
+ **/
+NDP_EXPORT
+bool ndp_msg_opt_prefix_flag_router_addr(struct ndp_msg *msg, int offset)
+{
+	struct nd_opt_prefix_info *pi =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return pi->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_RADDR;
+}
+
+/**
  * ndp_msg_opt_mtu:
  * @msg: message structure
  * @offset: in-message offset

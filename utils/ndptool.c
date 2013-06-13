@@ -257,6 +257,12 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 				pr_out("infinity");
 			else
 				pr_out("%us", preferred_time);
+			pr_out(", on_link: %s",
+			       ndp_msg_opt_prefix_flag_on_link(msg, offset) ? "yes" : "no");
+			pr_out(", autonomous_addr_conf: %s",
+			       ndp_msg_opt_prefix_flag_auto_addr_conf(msg, offset) ? "yes" : "no");
+			pr_out(", router_addr: %s",
+			       ndp_msg_opt_prefix_flag_router_addr(msg, offset) ? "yes" : "no");
 			pr_out("\n");
 		}
 		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_MTU)
