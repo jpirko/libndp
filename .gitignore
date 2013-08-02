@@ -17,4 +17,5 @@ Makefile.in
 /install-sh
 /ltmain.sh
 /missing
+utils/ndptool
 
