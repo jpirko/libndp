@@ -397,7 +397,7 @@ int main(int argc, char **argv)
 	int err;
 	int res = EXIT_FAILURE;
 
-	while ((opt = getopt_long(argc, argv, "hp:i:t:",
+	while ((opt = getopt_long(argc, argv, "hvt:i:",
 				  long_options, NULL)) >= 0) {
 
 		switch(opt) {
