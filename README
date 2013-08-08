@@ -1,8 +1,31 @@
-libndp
+# libndp - Library for Neighbor Discovery Protocol #
 
-How to install:
-$ ./autogen.sh
-$ ./configure
-$ make
-$ make install
 
+This package contains a library which provides a wrapper
+for IPv6 Neighbor Discovery Protocol.  It also provides a tool
+named ndptool for sending and receiving NDP messages.
+
+## Install
+
+LNST can be installed using python's distutils.
+
+    $ ./autogen.sh
+    $ ./configure
+    $ make
+    $ sudo make install
+
+## Authors
+
+* Jiri Pirko <jiri@resnulli.us>
+
+## Internet Resources
+
+* Project Home:     http://www.libndp.org/
+* Git Source Tree:  https://github.com/jpirko/libndp
+
+## License
+
+Copyright (C) 2013 Jiri Pirko <jiri@resnulli.us>
+
+libndp is distributed under GNU Lesser General Public License version 2.1.
+See the file "COPYING" in the source distribution for information on terms & conditions for accessing and otherwise using libndp.
