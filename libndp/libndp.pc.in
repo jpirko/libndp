@@ -7,4 +7,4 @@ Name: libndp
 Description: Neighbour discovery library.
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lndp
-Cflags: -I${includedir}/ndp.h
+Cflags: -I${includedir}
