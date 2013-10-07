@@ -1579,8 +1579,10 @@ static int ndp_sock_recv(struct ndp *ndp)
 		goto free_msg;
 	}
 	err = ndp_msg_type_by_raw_type(&msg_type, msg->icmp6_hdr->icmp6_type);
-	if (err)
+	if (err) {
+		err = 0;
 		goto free_msg;
+	}
 	ndp_msg_init(msg, msg_type);
 	ndp_msg_payload_len_set(msg, len);
 
