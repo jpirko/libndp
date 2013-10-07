@@ -1066,7 +1066,7 @@ int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
 	len -= offset;
 	while (len > 0) {
 		uint8_t cur_opt_raw_type = ptr[0];
-		uint8_t cur_opt_len = ptr[1] << 3; /* convert to bytes */
+		unsigned int cur_opt_len = ptr[1] << 3; /* convert to bytes */
 
 		if (!cur_opt_len || len < cur_opt_len)
 			break;
@@ -1093,7 +1093,7 @@ static void ndp_msg_check_opts(struct ndp_msg *msg)
 
 	while (len > 0) {
 		uint8_t cur_opt_raw_type = ptr[0];
-		uint8_t cur_opt_len = ptr[1] << 3; /* convert to bytes */
+		unsigned int cur_opt_len = ptr[1] << 3; /* convert to bytes */
 
 		if (!cur_opt_len || len < cur_opt_len)
 			break;
