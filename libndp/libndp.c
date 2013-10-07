@@ -1085,7 +1085,7 @@ int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
  * Check for validity of options and mark by magic opt type in case it is not
  * so ndp_msg_next_opt_offset() will ignore it.
  */
-static void ndp_msg_check_opts(struct ndp_msg *msg)
+static bool ndp_msg_check_opts(struct ndp_msg *msg)
 {
 	unsigned char *ptr = ndp_msg_payload_opts(msg);
 	size_t len = ndp_msg_payload_opts_len(msg);
@@ -1095,7 +1095,9 @@ static void ndp_msg_check_opts(struct ndp_msg *msg)
 		uint8_t cur_opt_raw_type = ptr[0];
 		unsigned int cur_opt_len = ptr[1] << 3; /* convert to bytes */
 
-		if (!cur_opt_len || len < cur_opt_len)
+		if (!cur_opt_len)
+			return false;
+		if (len < cur_opt_len)
 			break;
 		info = ndp_msg_opt_type_info_by_raw_type(cur_opt_raw_type);
 		if (info) {
@@ -1106,6 +1108,8 @@ static void ndp_msg_check_opts(struct ndp_msg *msg)
 		ptr += cur_opt_len;
 		len -= cur_opt_len;
 	}
+
+	return true;
 }
 
 /**
@@ -1595,7 +1599,10 @@ static int ndp_sock_recv(struct ndp *ndp)
 	dbg(ndp, "rcvd %s, len: %zuB",
 		 ndp_msg_type_info(msg_type)->strabbr, len);
 
-	ndp_msg_check_opts(msg);
+	if (!ndp_msg_check_opts(msg)) {
+		err = 0;
+		goto free_msg;
+	}
 
 	err = ndp_call_handlers(ndp, msg);;
 
