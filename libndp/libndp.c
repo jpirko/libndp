@@ -1540,7 +1540,7 @@ char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
 				return NULL;
 
 			if (strlen(buf))
-				sprintf(buf, "%s.", buf);
+				strcat(buf, ".");
 			buf[strlen(buf) + dom_len] = '\0';
 			memcpy(buf + strlen(buf), ptr, dom_len);
 			ptr += dom_len;
