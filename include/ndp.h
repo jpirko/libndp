@@ -20,6 +20,7 @@
 #ifndef _NDP_H_
 #define _NDP_H_
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <netinet/in.h>
 
