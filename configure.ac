@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([libndp], [1.2], [jiri@resnulli.us])
+AC_INIT([libndp], [1.3], [jiri@resnulli.us])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
@@ -23,7 +23,7 @@ AM_PROG_AR
 #    release, then set age to 0.
 
 AC_SUBST(LIBNDP_CURRENT, 0)
-AC_SUBST(LIBNDP_REVISION, 0)
+AC_SUBST(LIBNDP_REVISION, 1)
 AC_SUBST(LIBNDP_AGE, 0)
 
 CFLAGS="$CFLAGS -Wall"
