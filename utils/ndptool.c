@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/signalfd.h>
 #include <getopt.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -51,20 +50,44 @@ static int g_verbosity = DEFAULT_VERB;
 #define pr_out3(args...) pr_outx(VERB3, ##args)
 #define pr_out4(args...) pr_outx(VERB4, ##args)
 
+static void empty_signal_handler(int signal)
+{
+}
+
 static int run_main_loop(struct ndp *ndp)
 {
 	fd_set rfds;
 	fd_set rfds_tmp;
 	int fdmax;
 	int ret;
+	struct sigaction siginfo;
 	sigset_t mask;
-	int sfd;
 	int ndp_fd;
 	int err = 0;
+
+	sigemptyset(&siginfo.sa_mask);
+	siginfo.sa_flags = 0;
+	siginfo.sa_handler = empty_signal_handler;
+	ret = sigaction(SIGINT, &siginfo, NULL);
+	if (ret == -1) {
+		pr_err("Failed to set SIGINT handler\n");
+		return -errno;
+	}
+	ret = sigaction(SIGQUIT, &siginfo, NULL);
+	if (ret == -1) {
+		pr_err("Failed to set SIGQUIT handler\n");
+		return -errno;
+	}
+	ret = sigaction(SIGTERM, &siginfo, NULL);
+	if (ret == -1) {
+		pr_err("Failed to set SIGTERM handler\n");
+		return -errno;
+	}
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGINT);
 	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGTERM);
 
 	ret = sigprocmask(SIG_BLOCK, &mask, NULL);
 	if (ret == -1) {
@@ -72,51 +95,23 @@ static int run_main_loop(struct ndp *ndp)
 		return -errno;
 	}
 
-	sfd = signalfd(-1, &mask, 0);
-	if (sfd == -1) {
-		pr_err("Failed to open signalfd\n");
-		return -errno;
-	}
+	sigemptyset(&mask);
 
 	FD_ZERO(&rfds);
-	FD_SET(sfd, &rfds);
-	fdmax = sfd;
-
 	ndp_fd = ndp_get_eventfd(ndp);
 	FD_SET(ndp_fd, &rfds);
-	if (ndp_fd > fdmax)
-		fdmax = ndp_fd;
-	fdmax++;
+	fdmax = ndp_fd + 1;
 
 	for (;;) {
 		rfds_tmp = rfds;
-		ret = select(fdmax, &rfds_tmp, NULL, NULL, NULL);
+		ret = pselect(fdmax, &rfds_tmp, NULL, NULL, NULL, &mask);
 		if (ret == -1) {
+			if (errno == EINTR) {
+				goto out;
+			}
 			pr_err("Select failed\n");
 			err = -errno;
 			goto out;
-		}
-		if (FD_ISSET(sfd, &rfds_tmp)) {
-			struct signalfd_siginfo fdsi;
-			ssize_t len;
-
-			len = read(sfd, &fdsi, sizeof(struct signalfd_siginfo));
-		        if (len != sizeof(struct signalfd_siginfo)) {
-				pr_err("Unexpected data length came from signalfd\n");
-				err = -EINVAL;
-				goto out;
-			}
-			switch (fdsi.ssi_signo) {
-			case SIGINT:
-			case SIGQUIT:
-			case SIGTERM:
-				goto out;
-			default:
-				pr_err("Read unexpected signal\n");
-				err = -EINVAL;
-				goto out;
-			}
-
 		}
 		if (FD_ISSET(ndp_fd, &rfds_tmp)) {
 			err = ndp_call_eventfd_handler(ndp);
@@ -127,7 +122,6 @@ static int run_main_loop(struct ndp *ndp)
 		}
 	}
 out:
-	close(sfd);
 	return err;
 }
 
