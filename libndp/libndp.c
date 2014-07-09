@@ -1527,7 +1527,7 @@ char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
 
 	i = 0;
 	while (len > 0) {
-		*buf = '\0';
+		size_t buf_len = 0;
 		while (len > 0) {
 			uint8_t dom_len = *ptr;
 
@@ -1539,15 +1539,18 @@ char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
 			if (dom_len > len)
 				return NULL;
 
-			if (strlen(buf))
-				strcat(buf, ".");
-			buf[strlen(buf) + dom_len] = '\0';
-			memcpy(buf + strlen(buf), ptr, dom_len);
+			if (buf_len + dom_len + 1 > sizeof(buf))
+				return NULL;
+
+			memcpy(buf + buf_len, ptr, dom_len);
+			buf[buf_len + dom_len] = '.';
 			ptr += dom_len;
 			len -= dom_len;
+			buf_len += dom_len + 1;
 		}
-		if (!strlen(buf))
+		if (!buf_len)
 			break;
+		buf[buf_len - 1] = '\0'; /* overwrite final '.' */
 		if (i++ == domain_index)
 			return buf;
 	}
