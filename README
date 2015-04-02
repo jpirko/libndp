@@ -22,7 +22,7 @@ named ndptool for sending and receiving NDP messages.
 
 ## License
 
-Copyright (C) 2013 Jiri Pirko <jiri@resnulli.us>
+Copyright (C) 2013-2015 Jiri Pirko <jiri@resnulli.us>
 
 libndp is distributed under GNU Lesser General Public License version 2.1.
 See the file "COPYING" in the source distribution for information on terms & conditions for accessing and otherwise using libndp.
