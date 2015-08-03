@@ -278,7 +278,7 @@ struct ndp_msgns {
 };
 
 struct ndp_msgna {
-	struct nd_neighbor_solicit *na; /* must be first */
+	struct nd_neighbor_advert *na; /* must be first */
 };
 
 struct ndp_msgr {
@@ -359,6 +359,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "NA",
 		.raw_type = ND_NEIGHBOR_ADVERT,
 		.raw_struct_size = sizeof(struct nd_neighbor_advert),
+		.addrto_adjust = ndp_msg_addrto_adjust_all_nodes,
 	},
 	[NDP_MSG_R] = {
 		.strabbr = "R",
