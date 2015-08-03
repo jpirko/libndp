@@ -285,6 +285,15 @@ struct ndp_msgr {
 	struct nd_redirect *r; /* must be first */
 };
 
+typedef union nd_msg {
+	struct ndp_msggeneric	generic;
+	struct ndp_msgrs	rs;
+	struct ndp_msgra	ra;
+	struct ndp_msgns	ns;
+	struct ndp_msgna	na;
+	struct ndp_msgr		r;
+} ND_MSG;
+
 struct ndp_msg {
 #define NDP_MSG_BUFLEN 1500
 	unsigned char			buf[NDP_MSG_BUFLEN];
@@ -294,14 +303,7 @@ struct ndp_msg {
 	struct icmp6_hdr *		icmp6_hdr;
 	unsigned char *			opts_start; /* pointer to buf at the
 						       place where opts start */
-	union {
-		struct ndp_msggeneric	generic;
-		struct ndp_msgrs	rs;
-		struct ndp_msgra	ra;
-		struct ndp_msgns	ns;
-		struct ndp_msgna	na;
-		struct ndp_msgr		r;
-	} nd_msg;
+	ND_MSG				nd_msg;
 };
 
 struct ndp_msg_type_info {
@@ -310,6 +312,7 @@ struct ndp_msg_type_info {
 	uint8_t raw_type;
 	size_t raw_struct_size;
 	void (*addrto_adjust)(struct in6_addr *addr);
+	void (*data_adjust)(ND_MSG *nd_msg);
 };
 
 static void ndp_msg_addrto_adjust_all_nodes(struct in6_addr *addr)
@@ -336,6 +339,13 @@ static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
 	addr->s6_addr32[3] = htonl(0x2);
 }
 
+/* set override flag for Unsolicited NA */
+static void ndp_msg_data_adjust_unsol_na(ND_MSG *nd_msg)
+{
+	struct ndp_msgna *msgna = (struct ndp_msgna*) &nd_msg->na;
+	msgna->na->nd_na_hdr.icmp6_data32[0] = ND_NA_FLAG_OVERRIDE;
+}
+
 static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 {
 	[NDP_MSG_RS] = {
@@ -360,6 +370,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.raw_type = ND_NEIGHBOR_ADVERT,
 		.raw_struct_size = sizeof(struct nd_neighbor_advert),
 		.addrto_adjust = ndp_msg_addrto_adjust_all_nodes,
+		.data_adjust = ndp_msg_data_adjust_unsol_na,
 	},
 	[NDP_MSG_R] = {
 		.strabbr = "R",
@@ -713,6 +724,8 @@ int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 
 	if (ndp_msg_type_info(msg_type)->addrto_adjust)
 		ndp_msg_type_info(msg_type)->addrto_adjust(&msg->addrto);
+	if (ndp_msg_type_info(msg_type)->data_adjust)
+		ndp_msg_type_info(msg_type)->data_adjust(&msg->nd_msg);
 	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
 			 &msg->addrto, msg->ifindex);
 }
