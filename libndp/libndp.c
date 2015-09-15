@@ -997,6 +997,33 @@ void ndp_msgns_target_set(struct ndp_msgns *msgns,
 	msgns->ns->nd_ns_target = *target;
 }
 
+/**
+ * ndp_msgna_target:
+ * @msgra: NS message structure
+ *
+ * Get NA target.
+ *
+ * Returna: pointer to struct in6_addr.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msgna_target(struct ndp_msgna *msgna)
+{
+	return &msgna->na->nd_na_target;
+}
+
+/**
+ * ndp_msgna_target_set:
+ * @msgna: pointer to struct in6_addr.
+ *
+ * Set NA target.
+ **/
+NDP_EXPORT
+void ndp_msgna_target_set(struct ndp_msgna *msgna,
+			  struct in6_addr *target)
+{
+	msgna->na->nd_na_target = *target;
+}
+
 
 /**
  * SECTION: msg_opt infrastructure
