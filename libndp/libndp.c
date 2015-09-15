@@ -970,6 +970,33 @@ void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
 }
 
+/**
+ * ndp_msgns_target:
+ * @msgra: NS message structure
+ *
+ * Get NS target.
+ *
+ * Returns: pointer to struct in6_addr.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msgns_target(struct ndp_msgns *msgns)
+{
+	return &msgns->ns->nd_ns_target;
+}
+
+/**
+ * ndp_msgns_target_set:
+ * @msgns: pointer to struct in6_addr.
+ *
+ * Set NS target.
+ **/
+NDP_EXPORT
+void ndp_msgns_target_set(struct ndp_msgns *msgns,
+			  struct in6_addr *target)
+{
+	msgns->ns->nd_ns_target = *target;
+}
+
 
 /**
  * SECTION: msg_opt infrastructure
