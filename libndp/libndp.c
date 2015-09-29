@@ -719,6 +719,24 @@ int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 
 
 /**
+ * SECTION: msgna getters/setters
+ * @short_description: Getters and setters for NA message
+ */
+
+/**
+ * ndp_msgna_override_set:
+ * @msgra: NA message structure
+ *
+ * Set NA override flag for Unsolicited NA.
+ **/
+NDP_EXPORT
+void ndp_msgna_override_set(struct ndp_msgna *msgna)
+{
+	msgna->na->nd_na_hdr.icmp6_data32[0] |= ND_NA_FLAG_OVERRIDE;
+}
+
+
+/**
  * SECTION: msgra getters/setters
  * @short_description: Getters and setters for RA message
  */
