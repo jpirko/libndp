@@ -1,0 +1,7 @@
+libndp_1_6 {
+global:
+	ndp_msgns_target;
+	ndp_msgns_target_set;
+	ndp_msgna_target;
+	ndp_msgna_target_set;
+};

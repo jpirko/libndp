@@ -278,7 +278,7 @@ struct ndp_msgns {
 };
 
 struct ndp_msgna {
-	struct nd_neighbor_solicit *na; /* must be first */
+	struct nd_neighbor_advert *na; /* must be first */
 };
 
 struct ndp_msgr {
@@ -309,24 +309,38 @@ struct ndp_msg_type_info {
 	char strabbr[NDP_STRABBR_SIZE];
 	uint8_t raw_type;
 	size_t raw_struct_size;
-	void (*addrto_adjust)(struct in6_addr *addr);
+	void (*addrto_adjust)(struct ndp_msg *msg);
 };
 
-static void ndp_msg_addrto_adjust_all_nodes(struct in6_addr *addr)
+static void ndp_msg_addrto_adjust_solicited_node(struct ndp_msg *msg)
 {
 	struct in6_addr any = IN6ADDR_ANY_INIT;
+	struct in6_addr *addr = &msg->addrto;
+	struct ndp_msgns *msgns = ndp_msgns (msg);
+	struct in6_addr *target = NULL;
 
 	if (memcmp(addr, &any, sizeof(any)))
 		return;
 	addr->s6_addr32[0] = htonl(0xFF020000);
 	addr->s6_addr32[1] = 0;
-	addr->s6_addr32[2] = 0;
-	addr->s6_addr32[3] = htonl(0x1);
+
+	if (msgns)
+		target = ndp_msgns_target (msgns);
+
+	if (target && memcmp(target, &any, sizeof(any))) {
+		addr->s6_addr32[2] = htonl(0x1);
+		addr->s6_addr32[3] = target->s6_addr32[3];
+		addr->s6_addr[12] = 0xff;
+	} else {
+		addr->s6_addr32[2] = 0;
+		addr->s6_addr32[3] = htonl(0x1);
+	}
 }
 
-static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
+static void ndp_msg_addrto_adjust_all_routers(struct ndp_msg *msg)
 {
 	struct in6_addr any = IN6ADDR_ANY_INIT;
+	struct in6_addr *addr = &msg->addrto;
 
 	if (memcmp(addr, &any, sizeof(any)))
 		return;
@@ -353,7 +367,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "NS",
 		.raw_type = ND_NEIGHBOR_SOLICIT,
 		.raw_struct_size = sizeof(struct nd_neighbor_solicit),
-		.addrto_adjust = ndp_msg_addrto_adjust_all_nodes,
+		.addrto_adjust = ndp_msg_addrto_adjust_solicited_node,
 	},
 	[NDP_MSG_NA] = {
 		.strabbr = "NA",
@@ -711,7 +725,7 @@ int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
 
 	if (ndp_msg_type_info(msg_type)->addrto_adjust)
-		ndp_msg_type_info(msg_type)->addrto_adjust(&msg->addrto);
+		ndp_msg_type_info(msg_type)->addrto_adjust(msg);
 	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
 			 &msg->addrto, msg->ifindex);
 }
@@ -954,6 +968,60 @@ void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time)
 {
 	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
+}
+
+/**
+ * ndp_msgns_target:
+ * @msgra: NS message structure
+ *
+ * Get NS target.
+ *
+ * Returns: pointer to struct in6_addr.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msgns_target(struct ndp_msgns *msgns)
+{
+	return &msgns->ns->nd_ns_target;
+}
+
+/**
+ * ndp_msgns_target_set:
+ * @msgns: pointer to struct in6_addr.
+ *
+ * Set NS target.
+ **/
+NDP_EXPORT
+void ndp_msgns_target_set(struct ndp_msgns *msgns,
+			  struct in6_addr *target)
+{
+	msgns->ns->nd_ns_target = *target;
+}
+
+/**
+ * ndp_msgna_target:
+ * @msgra: NS message structure
+ *
+ * Get NA target.
+ *
+ * Returna: pointer to struct in6_addr.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msgna_target(struct ndp_msgna *msgna)
+{
+	return &msgna->na->nd_na_target;
+}
+
+/**
+ * ndp_msgna_target_set:
+ * @msgna: pointer to struct in6_addr.
+ *
+ * Set NA target.
+ **/
+NDP_EXPORT
+void ndp_msgna_target_set(struct ndp_msgna *msgna,
+			  struct in6_addr *target)
+{
+	msgna->na->nd_na_target = *target;
 }
 
 

@@ -100,6 +100,14 @@ uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra);
 void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time);
 
+struct in6_addr *ndp_msgns_target(struct ndp_msgns *msgns);
+void ndp_msgns_target_set(struct ndp_msgns *msgns,
+                          struct in6_addr *target);
+
+struct in6_addr *ndp_msgna_target(struct ndp_msgna *msgna);
+void ndp_msgna_target_set(struct ndp_msgna *msgna,
+                          struct in6_addr *target);
+
 enum ndp_msg_opt_type {
 	NDP_MSG_OPT_SLLADDR, /* Source Link-layer Address */
 	NDP_MSG_OPT_TLLADDR, /* Target Link-layer Address */

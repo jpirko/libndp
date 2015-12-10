@@ -8,9 +8,11 @@ AM_LDFLAGS = -Wl,--gc-sections -Wl,--as-needed
 lib_LTLIBRARIES = libndp.la
 libndp_la_SOURCES = libndp.c
 libndp_la_CFLAGS= $(AM_CFLAGS) -I${top_srcdir}/include -D_GNU_SOURCE
-libndp_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LIBNDP_CURRENT@:@LIBNDP_REVISION@:@LIBNDP_AGE@
+libndp_la_LDFLAGS = $(AM_LDFLAGS) -version-info @LIBNDP_CURRENT@:@LIBNDP_REVISION@:@LIBNDP_AGE@ \
+	 -Wl,--version-script=${srcdir}/libndp.ver
+EXTRA_libndp_la_DEPENDENCIES = libndp.ver
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libndp.pc
 
-EXTRA_DIST = ndp_private.h list.h
+EXTRA_DIST = ndp_private.h list.h libndp.ver
