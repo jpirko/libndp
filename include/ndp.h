@@ -78,6 +78,8 @@ uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
 void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
 int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
 
+void ndp_msgna_override_set(struct ndp_msgna *msgna);
+
 uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra);
 void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit);
 bool ndp_msgra_flag_managed(struct ndp_msgra *msgra);

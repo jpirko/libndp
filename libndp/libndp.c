@@ -278,7 +278,7 @@ struct ndp_msgns {
 };
 
 struct ndp_msgna {
-	struct nd_neighbor_solicit *na; /* must be first */
+	struct nd_neighbor_advert *na; /* must be first */
 };
 
 struct ndp_msgr {
@@ -359,6 +359,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "NA",
 		.raw_type = ND_NEIGHBOR_ADVERT,
 		.raw_struct_size = sizeof(struct nd_neighbor_advert),
+		.addrto_adjust = ndp_msg_addrto_adjust_all_nodes,
 	},
 	[NDP_MSG_R] = {
 		.strabbr = "R",
@@ -714,6 +715,24 @@ int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
 		ndp_msg_type_info(msg_type)->addrto_adjust(&msg->addrto);
 	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
 			 &msg->addrto, msg->ifindex);
+}
+
+
+/**
+ * SECTION: msgna getters/setters
+ * @short_description: Getters and setters for NA message
+ */
+
+/**
+ * ndp_msgna_override_set:
+ * @msgra: NA message structure
+ *
+ * Set NA override flag for Unsolicited NA.
+ **/
+NDP_EXPORT
+void ndp_msgna_override_set(struct ndp_msgna *msgna)
+{
+	msgna->na->nd_na_hdr.icmp6_data32[0] |= ND_NA_FLAG_OVERRIDE;
 }
 
 
