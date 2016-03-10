@@ -39,6 +39,8 @@ enum verbosity_level {
 #define DEFAULT_VERB VERB1
 static int g_verbosity = DEFAULT_VERB;
 
+static uint8_t flags = ND_OPT_NORMAL;
+
 #define pr_err(args...) fprintf(stderr, ##args)
 #define pr_outx(verb_level, args...)			\
 	do {						\
@@ -133,6 +135,7 @@ static void print_help(const char *argv0) {
             "\t-t --msg-type=TYPE       Specify message type\n"
 	    "\t                         (\"rs\", \"ra\", \"ns\", \"na\")\n"
             "\t-i --ifname=IFNAME       Specify interface name\n"
+            "\t-U --unsolicited         Send Unsolicited NA\n"
 	    "Available commands:\n"
 	    "\tmonitor\n"
 	    "\tsend\n",
@@ -340,7 +343,8 @@ static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
 		return err;
 	}
 	ndp_msg_ifindex_set(msg, ifindex);
-	err = ndp_msg_send(ndp, msg);
+
+	err = ndp_msg_send(ndp, msg, flags);
 	if (err) {
 		pr_err("Failed to send message\n");
 		goto msg_destroy;
@@ -379,6 +383,7 @@ int main(int argc, char **argv)
 		{ "verbose",	no_argument,		NULL, 'v' },
 		{ "msg-type",	required_argument,	NULL, 't' },
 		{ "ifname",	required_argument,	NULL, 'i' },
+		{ "unsolicited",no_argument,		NULL, 'U' },
 		{ NULL, 0, NULL, 0 }
 	};
 	int opt;
@@ -391,7 +396,7 @@ int main(int argc, char **argv)
 	int err;
 	int res = EXIT_FAILURE;
 
-	while ((opt = getopt_long(argc, argv, "hvt:i:",
+	while ((opt = getopt_long(argc, argv, "hvt:i:U",
 				  long_options, NULL)) >= 0) {
 
 		switch(opt) {
@@ -408,6 +413,9 @@ int main(int argc, char **argv)
 		case 'i':
 			free(ifname);
 			ifname = strdup(optarg);
+			break;
+		case 'U':
+			flags |= ND_OPT_NA_UNSOL;
 			break;
 		case '?':
 			pr_err("unknown option.\n");
