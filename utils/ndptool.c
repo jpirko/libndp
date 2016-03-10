@@ -344,7 +344,7 @@ static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
 	}
 	ndp_msg_ifindex_set(msg, ifindex);
 
-	err = ndp_msg_send(ndp, msg, flags);
+	err = ndp_msg_send_with_flags(ndp, msg, flags);
 	if (err) {
 		pr_err("Failed to send message\n");
 		goto msg_destroy;

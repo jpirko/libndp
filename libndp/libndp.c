@@ -700,6 +700,21 @@ void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
  * ndp_msg_send:
  * @ndp: libndp library context
  * @msg: message structure
+ *
+ * Send message.
+ *
+ * Returns: zero on success or negative number in case of an error.
+ **/
+NDP_EXPORT
+int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
+{
+	return ndp_msg_send_with_flags(ndp, msg, ND_OPT_NORMAL);
+}
+
+/**
+ * ndp_msg_send_with_flags:
+ * @ndp: libndp library context
+ * @msg: message structure
  * @flags: option flags within message type
  *
  * Send message.
@@ -707,7 +722,7 @@ void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
  * Returns: zero on success or negative number in case of an error.
  **/
 NDP_EXPORT
-int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg, uint8_t flags)
+int ndp_msg_send_with_flags(struct ndp *ndp, struct ndp_msg *msg, uint8_t flags)
 {
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
 
