@@ -53,6 +53,9 @@ enum ndp_msg_type {
 	NDP_MSG_ALL, /* Matches all */
 };
 
+#define ND_OPT_NORMAL       0x0000    /* default, no change to ND message */
+#define ND_OPT_NA_UNSOL     0x0001    /* Unsolicited Neighbour Advertisement */
+
 enum ndp_route_preference {
 	NDP_ROUTE_PREF_LOW = 3,
 	NDP_ROUTE_PREF_MEDIUM = 0,
@@ -76,7 +79,7 @@ enum ndp_msg_type ndp_msg_type(struct ndp_msg *msg);
 struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg);
 uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
 void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
-int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
+int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg, uint8_t flags);
 
 uint8_t ndp_msgra_curhoplimit(struct ndp_msgra *msgra);
 void ndp_msgra_curhoplimit_set(struct ndp_msgra *msgra, uint8_t curhoplimit);
@@ -99,6 +102,14 @@ void ndp_msgra_reachable_time_set(struct ndp_msgra *msgra,
 uint32_t ndp_msgra_retransmit_time(struct ndp_msgra *msgra);
 void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time);
+
+bool ndp_msgna_flag_router(struct ndp_msgna *msgna);
+void ndp_msgna_flag_router_set(struct ndp_msgna *msgna, bool flag_router);
+bool ndp_msgna_flag_solicited(struct ndp_msgna *msgna);
+void ndp_msgna_flag_solicited_set(struct ndp_msgna *msgna,
+				  bool flag_solicited);
+bool ndp_msgna_flag_override(struct ndp_msgna *msgna);
+void ndp_msgna_flag_override_set(struct ndp_msgna *msgna, bool flag_override);
 
 enum ndp_msg_opt_type {
 	NDP_MSG_OPT_SLLADDR, /* Source Link-layer Address */

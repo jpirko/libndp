@@ -676,7 +676,7 @@ struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg)
  *
  * Get interface index of message.
  *
- * Returns: Inteface index
+ * Returns: Interface index
  **/
 NDP_EXPORT
 uint32_t ndp_msg_ifindex(struct ndp_msg *msg)
@@ -700,18 +700,34 @@ void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
  * ndp_msg_send:
  * @ndp: libndp library context
  * @msg: message structure
+ * @flags: option flags within message type
  *
  * Send message.
  *
  * Returns: zero on success or negative number in case of an error.
  **/
 NDP_EXPORT
-int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg)
+int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg, uint8_t flags)
 {
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
 
 	if (ndp_msg_type_info(msg_type)->addrto_adjust)
 		ndp_msg_type_info(msg_type)->addrto_adjust(&msg->addrto);
+
+	switch (msg_type) {
+		case NDP_MSG_NA:
+			if (flags & ND_OPT_NA_UNSOL) {
+				ndp_msgna_flag_override_set((struct ndp_msgna*)&msg->nd_msg, true);
+				ndp_msgna_flag_solicited_set((struct ndp_msgna*)&msg->nd_msg, false);
+				ndp_msg_addrto_adjust_all_nodes(&msg->addrto);
+			} else {
+				ndp_msgna_flag_solicited_set((struct ndp_msgna*)&msg->nd_msg, true);
+			}
+			break;
+		default:
+			break;
+	}
+
 	return mysendto6(ndp->sock, msg->buf, msg->len, 0,
 			 &msg->addrto, msg->ifindex);
 }
@@ -954,6 +970,100 @@ void ndp_msgra_retransmit_time_set(struct ndp_msgra *msgra,
 				   uint32_t retransmit_time)
 {
 	msgra->ra->nd_ra_retransmit = htonl(retransmit_time);
+}
+
+
+/**
+ * SECTION: msgna getters/setters
+ * @short_description: Getters and setters for NA message
+ */
+
+/**
+ * ndp_msgna_flag_router:
+ * @msgna: NA message structure
+ *
+ * Get NA router flag.
+ *
+ * Returns: router flag.
+ **/
+NDP_EXPORT
+bool ndp_msgna_flag_router(struct ndp_msgna *msgna)
+{
+	return msgna->na->nd_na_flags_reserved & ND_NA_FLAG_ROUTER;
+}
+
+/**
+ * ndp_msgna_flag_router_set:
+ * @msgna: NA message structure
+ *
+ * Set NA router flag.
+ **/
+NDP_EXPORT
+void ndp_msgna_flag_router_set(struct ndp_msgna *msgna, bool flag_router)
+{
+	if (flag_router)
+		msgna->na->nd_na_flags_reserved |= ND_NA_FLAG_ROUTER;
+	else
+		msgna->na->nd_na_flags_reserved &= ~ND_NA_FLAG_ROUTER;
+}
+
+/**
+ * ndp_msgna_flag_solicited:
+ * @msgna: NA message structure
+ *
+ * Get NA solicited flag.
+ *
+ * Returns: solicited flag.
+ **/
+NDP_EXPORT
+bool ndp_msgna_flag_solicited(struct ndp_msgna *msgna)
+{
+	return msgna->na->nd_na_flags_reserved & ND_NA_FLAG_SOLICITED;
+}
+
+/**
+ * ndp_msgna_flag_solicited_set:
+ * @msgna: NA message structure
+ *
+ * Set NA managed flag.
+ **/
+NDP_EXPORT
+void ndp_msgna_flag_solicited_set(struct ndp_msgna *msgna, bool flag_solicited)
+{
+	if (flag_solicited)
+		msgna->na->nd_na_flags_reserved |= ND_NA_FLAG_SOLICITED;
+	else
+		msgna->na->nd_na_flags_reserved &= ~ND_NA_FLAG_SOLICITED;
+}
+
+/**
+ * ndp_msgna_flag_override:
+ * @msgna: NA message structure
+ *
+ * Get NA override flag.
+ *
+ * Returns: override flag.
+ **/
+NDP_EXPORT
+bool ndp_msgna_flag_override(struct ndp_msgna *msgna)
+{
+	return msgna->na->nd_na_flags_reserved & ND_NA_FLAG_OVERRIDE;
+}
+
+/**
+ * ndp_msgna_flag_override_set:
+ * @msgra: NA message structure
+ *
+ * Set NA override flag.
+ */
+
+NDP_EXPORT
+void ndp_msgna_flag_override_set(struct ndp_msgna *msgna, bool flag_override)
+{
+	if (flag_override)
+		msgna->na->nd_na_flags_reserved |= ND_NA_FLAG_OVERRIDE;
+	else
+		msgna->na->nd_na_flags_reserved &= ~ND_NA_FLAG_OVERRIDE;
 }
 
 
