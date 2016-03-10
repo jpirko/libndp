@@ -278,7 +278,7 @@ struct ndp_msgns {
 };
 
 struct ndp_msgna {
-	struct nd_neighbor_solicit *na; /* must be first */
+	struct nd_neighbor_advert *na; /* must be first */
 };
 
 struct ndp_msgr {
