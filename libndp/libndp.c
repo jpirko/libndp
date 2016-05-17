@@ -333,6 +333,7 @@ struct ndp_msg_type_info {
 	uint8_t raw_type;
 	size_t raw_struct_size;
 	void (*addrto_adjust)(struct in6_addr *addr);
+	bool (*addrto_validate)(struct in6_addr *addr);
 };
 
 static void ndp_msg_addrto_adjust_all_nodes(struct in6_addr *addr)
@@ -359,6 +360,11 @@ static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
 	addr->s6_addr32[3] = htonl(0x2);
 }
 
+static bool ndp_msg_addrto_validate_link_local(struct in6_addr *addr)
+{
+	return IN6_IS_ADDR_LINKLOCAL (addr);
+}
+
 static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 {
 	[NDP_MSG_RS] = {
@@ -371,6 +377,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "RA",
 		.raw_type = ND_ROUTER_ADVERT,
 		.raw_struct_size = sizeof(struct nd_router_advert),
+		.addrto_validate = ndp_msg_addrto_validate_link_local,
 	},
 	[NDP_MSG_NS] = {
 		.strabbr = "NS",
@@ -387,6 +394,7 @@ static struct ndp_msg_type_info ndp_msg_type_info_list[] =
 		.strabbr = "R",
 		.raw_type = ND_REDIRECT,
 		.raw_struct_size = sizeof(struct nd_redirect),
+		.addrto_validate = ndp_msg_addrto_validate_link_local,
 	},
 };
 
@@ -418,7 +426,11 @@ static bool ndp_msg_check_valid(struct ndp_msg *msg)
 
 	if (len < ndp_msg_type_info(msg_type)->raw_struct_size)
 		return false;
-	return true;
+
+	if (ndp_msg_type_info(msg_type)->addrto_validate)
+		return ndp_msg_type_info(msg_type)->addrto_validate(&msg->addrto);
+	else
+		return true;
 }
 
 static struct ndp_msg *ndp_msg_alloc(void)
