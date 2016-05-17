@@ -137,10 +137,10 @@ static void *myzalloc(size_t size)
 }
 
 static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
-		       struct in6_addr *addr, uint32_t *ifindex)
+		       struct in6_addr *addr, uint32_t *ifindex, int *hoplimit)
 {
 	struct sockaddr_in6 sin6;
-	unsigned char cbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	unsigned char cbuf[2 * CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct iovec iovec;
 	struct msghdr msghdr;
 	struct cmsghdr *cmsghdr;
@@ -168,13 +168,26 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 	*ifindex = sin6.sin6_scope_id;
         for (cmsghdr = CMSG_FIRSTHDR(&msghdr); cmsghdr;
 	     cmsghdr = CMSG_NXTHDR(&msghdr, cmsghdr)) {
-		if (cmsghdr->cmsg_level == IPPROTO_IPV6 &&
-		    cmsghdr->cmsg_type == IPV6_PKTINFO &&
-		    cmsghdr->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo))) {
-			struct in6_pktinfo *pktinfo;
+		if (cmsghdr->cmsg_level != IPPROTO_IPV6)
+			continue;
 
-			pktinfo = (struct in6_pktinfo *) CMSG_DATA(cmsghdr);
-			*ifindex = pktinfo->ipi6_ifindex;
+		switch(cmsghdr->cmsg_type) {
+		case IPV6_PKTINFO:
+			if (cmsghdr->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo))) {
+				struct in6_pktinfo *pktinfo;
+
+				pktinfo = (struct in6_pktinfo *) CMSG_DATA(cmsghdr);
+				*ifindex = pktinfo->ipi6_ifindex;
+			}
+			break;
+		case IPV6_HOPLIMIT:
+			if (cmsghdr->cmsg_len == CMSG_LEN(sizeof(int))) {
+				int *val;
+
+				val = (int *) CMSG_DATA(cmsghdr);
+				*hoplimit = *val;
+			}
+			break;
 		}
 	}
 	*addr = sin6.sin6_addr;
@@ -249,6 +262,15 @@ static int ndp_sock_open(struct ndp *ndp)
 		goto close_sock;
 	}
 
+	val = 1;
+	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
+			 &val, sizeof(val));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt IPV6_RECVHOPLIMIT,.");
+		err = -errno;
+		goto close_sock;
+	}
+
 	ndp->sock = sock;
 	return 0;
 close_sock:
@@ -291,6 +313,7 @@ struct ndp_msg {
 	size_t				len;
 	struct in6_addr			addrto;
 	uint32_t			ifindex;
+	int				hoplimit;
 	struct icmp6_hdr *		icmp6_hdr;
 	unsigned char *			opts_start; /* pointer to buf at the
 						       place where opts start */
@@ -1697,13 +1720,19 @@ static int ndp_sock_recv(struct ndp *ndp)
 
 	len = ndp_msg_payload_maxlen(msg);
 	err = myrecvfrom6(ndp->sock, msg->buf, &len, 0,
-			  &msg->addrto, &msg->ifindex);
+			  &msg->addrto, &msg->ifindex, &msg->hoplimit);
 	if (err) {
 		err(ndp, "Failed to receive message");
 		goto free_msg;
 	}
-	dbg(ndp, "rcvd from: %s, ifindex: %u",
-		 str_in6_addr(&msg->addrto), msg->ifindex);
+	dbg(ndp, "rcvd from: %s, ifindex: %u, hoplimit: %d",
+		 str_in6_addr(&msg->addrto), msg->ifindex, msg->hoplimit);
+
+	if (msg->hoplimit != 255) {
+		warn(ndp, "ignoring packet with bad hop limit (%d)", msg->hoplimit);
+		err = 0;
+		goto free_msg;
+	}
 
 	if (len < sizeof(*msg->icmp6_hdr)) {
 		warn(ndp, "rcvd icmp6 packet too short (%luB)", len);
