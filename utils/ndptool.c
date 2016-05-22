@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ndp.h>
+#include <sys/select.h>
 
 enum verbosity_level {
 	VERB1,
