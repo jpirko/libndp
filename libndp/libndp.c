@@ -230,59 +230,6 @@ static const char *str_in6_addr(struct in6_addr *addr)
  * @short_description: functions that actually implements NDP
  */
 
-static int ndp_sock_open(struct ndp *ndp)
-{
-	int sock;
-	//struct icmp6_filter flt;
-	int ret;
-	int err;
-	int val;
-
-	sock = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
-	if (sock == -1) {
-		err(ndp, "Failed to create ICMP6 socket.");
-		return -errno;
-	}
-
-	val = 1;
-	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-			 &val, sizeof(val));
-	if (ret == -1) {
-		err(ndp, "Failed to setsockopt IPV6_RECVPKTINFO.");
-		err = -errno;
-		goto close_sock;
-	}
-
-	val = 255;
-	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-			 &val, sizeof(val));
-	if (ret == -1) {
-		err(ndp, "Failed to setsockopt IPV6_MULTICAST_HOPS.");
-		err = -errno;
-		goto close_sock;
-	}
-
-	val = 1;
-	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
-			 &val, sizeof(val));
-	if (ret == -1) {
-		err(ndp, "Failed to setsockopt IPV6_RECVHOPLIMIT,.");
-		err = -errno;
-		goto close_sock;
-	}
-
-	ndp->sock = sock;
-	return 0;
-close_sock:
-	close(sock);
-	return err;
-}
-
-static void ndp_sock_close(struct ndp *ndp)
-{
-	close(ndp->sock);
-}
-
 struct ndp_msggeneric {
 	void *dataptr; /* must be first */
 };
@@ -335,6 +282,7 @@ struct ndp_msg_type_info {
 	void (*addrto_adjust)(struct in6_addr *addr);
 	bool (*addrto_validate)(struct in6_addr *addr);
 };
+
 
 static void ndp_msg_addrto_adjust_all_nodes(struct in6_addr *addr)
 {
@@ -1778,6 +1726,65 @@ static int ndp_sock_recv(struct ndp *ndp)
 free_msg:
 	ndp_msg_destroy(msg);
 	return err;
+}
+
+
+/**
+ * SECTION: socket open/close functions
+ * @short_description: functions for opening and closing the ICMPv6 raw socket
+ */
+
+static int ndp_sock_open(struct ndp *ndp)
+{
+	int sock;
+	//struct icmp6_filter flt;
+	int ret;
+	int err;
+	int val;
+
+	sock = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+	if (sock == -1) {
+		err(ndp, "Failed to create ICMP6 socket.");
+		return -errno;
+	}
+
+	val = 1;
+	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+			 &val, sizeof(val));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt IPV6_RECVPKTINFO.");
+		err = -errno;
+		goto close_sock;
+	}
+
+	val = 255;
+	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+			 &val, sizeof(val));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt IPV6_MULTICAST_HOPS.");
+		err = -errno;
+		goto close_sock;
+	}
+
+	val = 1;
+	ret = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
+			 &val, sizeof(val));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt IPV6_RECVHOPLIMIT,.");
+		err = -errno;
+		goto close_sock;
+	}
+
+	ndp->sock = sock;
+	return 0;
+close_sock:
+	close(sock);
+	return err;
+}
+
+static void ndp_sock_close(struct ndp *ndp)
+{
+	close(ndp->sock);
 }
 
 
