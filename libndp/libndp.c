@@ -1737,10 +1737,11 @@ free_msg:
 static int ndp_sock_open(struct ndp *ndp)
 {
 	int sock;
-	//struct icmp6_filter flt;
+	struct icmp6_filter flt;
 	int ret;
 	int err;
 	int val;
+	int i;
 
 	sock = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 	if (sock == -1) {
@@ -1771,6 +1772,17 @@ static int ndp_sock_open(struct ndp *ndp)
 			 &val, sizeof(val));
 	if (ret == -1) {
 		err(ndp, "Failed to setsockopt IPV6_RECVHOPLIMIT,.");
+		err = -errno;
+		goto close_sock;
+	}
+
+	ICMP6_FILTER_SETBLOCKALL(&flt);
+	for (i = 0; i < NDP_MSG_TYPE_LIST_SIZE; i++)
+		ICMP6_FILTER_SETPASS(ndp_msg_type_info(i)->raw_type, &flt);
+	ret = setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &flt,
+			 sizeof(flt));
+	if (ret == -1) {
+		err(ndp, "Failed to setsockopt ICMP6_FILTER.");
 		err = -errno;
 		goto close_sock;
 	}
