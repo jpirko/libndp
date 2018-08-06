@@ -32,9 +32,13 @@
 #include <net/ethernet.h>
 #include <assert.h>
 #include <ndp.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 
 #include "ndp_private.h"
 #include "list.h"
+
+#define pr_err(args...) fprintf(stderr, ##args)
 
 /**
  * SECTION: logging
@@ -306,6 +310,23 @@ static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
 	addr->s6_addr32[1] = 0;
 	addr->s6_addr32[2] = 0;
 	addr->s6_addr32[3] = htonl(0x2);
+}
+
+/*
+ * compute link-local solicited-node multicast address
+ */
+static void ndp_msg_addrto_adjust_solicit_multi(struct in6_addr *addr,
+						struct in6_addr *target)
+{
+	struct in6_addr any = IN6ADDR_ANY_INIT;
+
+	/* Don't set addr to target if target is default IN6ADDR_ANY_INIT */
+	if (!memcmp(target, &any, sizeof(any)))
+		return;
+	addr->s6_addr32[0] = htonl(0xFF020000);
+	addr->s6_addr32[1] = 0;
+	addr->s6_addr32[2] = htonl(0x1);
+	addr->s6_addr32[3] = htonl(0xFF000000) | target->s6_addr32[3];
 }
 
 static bool ndp_msg_addrto_validate_link_local(struct in6_addr *addr)
@@ -677,6 +698,106 @@ NDP_EXPORT
 void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
 {
 	msg->ifindex = ifindex;
+}
+
+/**
+ * ndp_msg_target_set:
+ * @msg: message structure
+ * @target: ns,na target
+ *
+ * Set target address for NS and NA.
+ **/
+NDP_EXPORT
+void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
+{
+	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+	switch (msg_type) {
+		case NDP_MSG_NS:
+			((struct ndp_msgna*)&msg->nd_msg)->na->nd_na_target = *target;
+			/*
+			 * Neighbor Solicitations are multicast when the node
+			 * needs to resolve an address and unicast when the
+			 * node seeks to verify the reachability of a
+			 * neighbor.
+			 *
+			 * In this case we don't know if we have a cache of
+			 * target, so we use multicast to resolve the target
+			 * address.
+			 * */
+			ndp_msg_addrto_adjust_solicit_multi(&msg->addrto, target);
+			break;
+		case NDP_MSG_NA:
+			((struct ndp_msgns*)&msg->nd_msg)->ns->nd_ns_target = *target;
+			break;
+		default:
+			break;
+	}
+}
+
+static int ndp_get_iface_mac(int ifindex, char *ptr)
+{
+	int sockfd;
+	struct ifreq ifr;
+
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd == -1) {
+		pr_err("%s: Failed to create socket", __func__);
+		return -errno;
+	}
+
+	if (if_indextoname(ifindex, (char *)&ifr.ifr_name) == NULL) {
+		pr_err("%s: Failed to get iface name with index %d", __func__, ifindex);
+		return -errno;
+	}
+
+	if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
+		pr_err("%s: Failed to get iface mac with index %d\n", __func__, ifindex);
+		return -errno;
+	}
+
+	memcpy(ptr, &ifr.ifr_hwaddr.sa_data, sizeof(ifr.ifr_hwaddr.sa_data));
+
+	return 0;
+}
+
+static void ndp_msg_opt_set_linkaddr(struct ndp_msg *msg, int ndp_opt)
+{
+	char *opts_start = ndp_msg_payload_opts(msg);
+	struct nd_opt_hdr *s_laddr_opt = (struct nd_opt_hdr *) opts_start;
+	char *opt_data = (char *) s_laddr_opt + sizeof(struct nd_opt_hdr);
+	int err;
+
+	err = ndp_get_iface_mac(ndp_msg_ifindex(msg), opt_data);
+	if (err)
+		return;
+
+	opt_data += 6;
+	s_laddr_opt->nd_opt_type = ndp_opt;
+	s_laddr_opt->nd_opt_len = (opt_data - opts_start) >> 3;
+	msg->len += opt_data - opts_start;
+}
+
+/**
+ * ndp_msg_opt_set:
+ * @msg: message structure
+ *
+ * Set neighbor discovery option info.
+ **/
+NDP_EXPORT
+void ndp_msg_opt_set(struct ndp_msg *msg)
+{
+	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+
+	switch (msg_type) {
+		case NDP_MSG_NS:
+			ndp_msg_opt_set_linkaddr(msg, ND_OPT_SOURCE_LINKADDR);
+			break;
+		case NDP_MSG_NA:
+			ndp_msg_opt_set_linkaddr(msg, ND_OPT_TARGET_LINKADDR);
+			break;
+		default:
+			break;
+	}
 }
 
 /**

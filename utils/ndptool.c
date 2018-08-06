@@ -135,6 +135,7 @@ static void print_help(const char *argv0) {
             "\t-v --verbose             Increase output verbosity\n"
             "\t-t --msg-type=TYPE       Specify message type\n"
 	    "\t                         (\"rs\", \"ra\", \"ns\", \"na\")\n"
+            "\t-T --target=TARGET       Target address for NS or NA\n"
             "\t-i --ifname=IFNAME       Specify interface name\n"
             "\t-U --unsolicited         Send Unsolicited NA\n"
 	    "Available commands:\n"
@@ -333,7 +334,7 @@ static int run_cmd_monitor(struct ndp *ndp, enum ndp_msg_type msg_type,
 }
 
 static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
-			uint32_t ifindex)
+			uint32_t ifindex, struct in6_addr *target)
 {
 	struct ndp_msg *msg;
 	int err;
@@ -344,6 +345,8 @@ static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
 		return err;
 	}
 	ndp_msg_ifindex_set(msg, ifindex);
+	ndp_msg_target_set(msg, target);
+	ndp_msg_opt_set(msg);
 
 	err = ndp_msg_send_with_flags(ndp, msg, flags);
 	if (err) {
@@ -384,6 +387,7 @@ int main(int argc, char **argv)
 		{ "verbose",	no_argument,		NULL, 'v' },
 		{ "msg-type",	required_argument,	NULL, 't' },
 		{ "ifname",	required_argument,	NULL, 'i' },
+		{ "target",	required_argument,	NULL, 'T' },
 		{ "unsolicited",no_argument,		NULL, 'U' },
 		{ NULL, 0, NULL, 0 }
 	};
@@ -392,12 +396,14 @@ int main(int argc, char **argv)
 	char *msgtypestr = NULL;
 	enum ndp_msg_type msg_type;
 	char *ifname = NULL;
+	char *addr = NULL;
+	struct in6_addr target = IN6ADDR_ANY_INIT;
 	uint32_t ifindex;
 	char *cmd_name;
 	int err;
 	int res = EXIT_FAILURE;
 
-	while ((opt = getopt_long(argc, argv, "hvt:i:U",
+	while ((opt = getopt_long(argc, argv, "hvt:T:i:U",
 				  long_options, NULL)) >= 0) {
 
 		switch(opt) {
@@ -414,6 +420,10 @@ int main(int argc, char **argv)
 		case 'i':
 			free(ifname);
 			ifname = strdup(optarg);
+			break;
+		case 'd':
+			free(addr);
+			addr = strdup(optarg);
 			break;
 		case 'U':
 			flags |= ND_OPT_NA_UNSOL;
@@ -448,6 +458,11 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (addr && inet_pton(AF_INET6, addr, &target) <= 0) {
+		pr_err("Invalid target address \"%s\"\n", addr);
+		goto errout;
+	}
+
 	err = get_msg_type(&msg_type, msgtypestr);
 	if (err) {
 		pr_err("Invalid message type \"%s\" selected\n", msgtypestr);
@@ -478,7 +493,7 @@ int main(int argc, char **argv)
 			print_help(argv0);
 			goto errout;
 		}
-		err = run_cmd_send(ndp, msg_type, ifindex);
+		err = run_cmd_send(ndp, msg_type, ifindex, &target);
 	} else {
 		pr_err("Unknown command \"%s\"\n", cmd_name);
 		goto ndp_close;
