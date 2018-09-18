@@ -421,7 +421,7 @@ int main(int argc, char **argv)
 			free(ifname);
 			ifname = strdup(optarg);
 			break;
-		case 'd':
+		case 'T':
 			free(addr);
 			addr = strdup(optarg);
 			break;
