@@ -713,7 +713,7 @@ void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
 	switch (msg_type) {
 		case NDP_MSG_NS:
-			((struct ndp_msgna*)&msg->nd_msg)->na->nd_na_target = *target;
+			((struct ndp_msgns*)&msg->nd_msg)->ns->nd_ns_target = *target;
 			/*
 			 * Neighbor Solicitations are multicast when the node
 			 * needs to resolve an address and unicast when the
@@ -727,7 +727,7 @@ void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
 			ndp_msg_addrto_adjust_solicit_multi(&msg->addrto, target);
 			break;
 		case NDP_MSG_NA:
-			((struct ndp_msgns*)&msg->nd_msg)->ns->nd_ns_target = *target;
+			((struct ndp_msgna*)&msg->nd_msg)->na->nd_na_target = *target;
 			break;
 		default:
 			break;
