@@ -736,7 +736,7 @@ void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
 
 static int ndp_get_iface_mac(int ifindex, char *ptr)
 {
-	int sockfd;
+	int sockfd, err = 0;
 	struct ifreq ifr;
 
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -747,17 +747,21 @@ static int ndp_get_iface_mac(int ifindex, char *ptr)
 
 	if (if_indextoname(ifindex, (char *)&ifr.ifr_name) == NULL) {
 		pr_err("%s: Failed to get iface name with index %d", __func__, ifindex);
-		return -errno;
+		err = -errno;
+		goto close_sock;
 	}
 
 	if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
 		pr_err("%s: Failed to get iface mac with index %d\n", __func__, ifindex);
-		return -errno;
+		err = -errno;
+		goto close_sock;
 	}
 
 	memcpy(ptr, &ifr.ifr_hwaddr.sa_data, sizeof(ifr.ifr_hwaddr.sa_data));
 
-	return 0;
+close_sock:
+	close(sockfd);
+	return err;
 }
 
 static void ndp_msg_opt_set_linkaddr(struct ndp_msg *msg, int ndp_opt)
