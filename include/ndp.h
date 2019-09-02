@@ -80,6 +80,7 @@ struct in6_addr *ndp_msg_addrto(struct ndp_msg *msg);
 uint32_t ndp_msg_ifindex(struct ndp_msg *msg);
 void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex);
 void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target);
+void ndp_msg_dest_set(struct ndp_msg *msg, struct in6_addr *dest);
 void ndp_msg_opt_set(struct ndp_msg *msg);
 int ndp_msg_send(struct ndp *ndp, struct ndp_msg *msg);
 int ndp_msg_send_with_flags(struct ndp *ndp, struct ndp_msg *msg, uint8_t flags);

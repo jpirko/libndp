@@ -135,7 +135,8 @@ static void print_help(const char *argv0) {
             "\t-v --verbose             Increase output verbosity\n"
             "\t-t --msg-type=TYPE       Specify message type\n"
 	    "\t                         (\"rs\", \"ra\", \"ns\", \"na\")\n"
-            "\t-T --target=TARGET       Target address for NS or NA\n"
+            "\t-D --dest=DEST           Dest address in IPv6 header for NS or NA\n"
+            "\t-T --target=TARGET       Target address in ICMPv6 header for NS or NA\n"
             "\t-i --ifname=IFNAME       Specify interface name\n"
             "\t-U --unsolicited         Send Unsolicited NA\n"
 	    "Available commands:\n"
@@ -334,7 +335,8 @@ static int run_cmd_monitor(struct ndp *ndp, enum ndp_msg_type msg_type,
 }
 
 static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
-			uint32_t ifindex, struct in6_addr *target)
+			uint32_t ifindex, struct in6_addr *dest,
+			struct in6_addr *target)
 {
 	struct ndp_msg *msg;
 	int err;
@@ -345,6 +347,7 @@ static int run_cmd_send(struct ndp *ndp, enum ndp_msg_type msg_type,
 		return err;
 	}
 	ndp_msg_ifindex_set(msg, ifindex);
+	ndp_msg_dest_set(msg, dest);
 	ndp_msg_target_set(msg, target);
 	ndp_msg_opt_set(msg);
 
@@ -387,23 +390,27 @@ int main(int argc, char **argv)
 		{ "verbose",	no_argument,		NULL, 'v' },
 		{ "msg-type",	required_argument,	NULL, 't' },
 		{ "ifname",	required_argument,	NULL, 'i' },
+		{ "dest",	required_argument,	NULL, 'D' },
 		{ "target",	required_argument,	NULL, 'T' },
 		{ "unsolicited",no_argument,		NULL, 'U' },
 		{ NULL, 0, NULL, 0 }
 	};
-	int opt;
-	struct ndp *ndp;
-	char *msgtypestr = NULL;
-	enum ndp_msg_type msg_type;
-	char *ifname = NULL;
-	char *addr = NULL;
-	struct in6_addr target = IN6ADDR_ANY_INIT;
-	uint32_t ifindex;
-	char *cmd_name;
-	int err;
-	int res = EXIT_FAILURE;
 
-	while ((opt = getopt_long(argc, argv, "hvt:T:i:U",
+	struct in6_addr target = IN6ADDR_ANY_INIT;
+	struct in6_addr dest = IN6ADDR_ANY_INIT;
+	enum ndp_msg_type msg_type;
+	char *msgtypestr = NULL;
+	int res = EXIT_FAILURE;
+	char *ifname = NULL;
+	char *daddr = NULL;
+	char *taddr = NULL;
+	uint32_t ifindex;
+	struct ndp *ndp;
+	char *cmd_name;
+	int opt;
+	int err;
+
+	while ((opt = getopt_long(argc, argv, "hvt:D:T:i:U",
 				  long_options, NULL)) >= 0) {
 
 		switch(opt) {
@@ -421,9 +428,13 @@ int main(int argc, char **argv)
 			free(ifname);
 			ifname = strdup(optarg);
 			break;
+		case 'D':
+			free(daddr);
+			daddr = strdup(optarg);
+			break;
 		case 'T':
-			free(addr);
-			addr = strdup(optarg);
+			free(taddr);
+			taddr = strdup(optarg);
 			break;
 		case 'U':
 			flags |= ND_OPT_NA_UNSOL;
@@ -458,8 +469,18 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (addr && inet_pton(AF_INET6, addr, &target) <= 0) {
-		pr_err("Invalid target address \"%s\"\n", addr);
+	if (daddr && (flags & ND_OPT_NA_UNSOL)) {
+		pr_err("Conflicts for both setting dest address and unsolicited flag\n");
+		goto errout;
+	}
+
+	if (daddr && inet_pton(AF_INET6, daddr, &dest) <= 0) {
+		pr_err("Invalid dest address \"%s\"\n", daddr);
+		goto errout;
+	}
+
+	if (taddr && inet_pton(AF_INET6, taddr, &target) <= 0) {
+		pr_err("Invalid target address \"%s\"\n", taddr);
 		goto errout;
 	}
 
@@ -493,7 +514,7 @@ int main(int argc, char **argv)
 			print_help(argv0);
 			goto errout;
 		}
-		err = run_cmd_send(ndp, msg_type, ifindex, &target);
+		err = run_cmd_send(ndp, msg_type, ifindex, &dest, &target);
 	} else {
 		pr_err("Unknown command \"%s\"\n", cmd_name);
 		goto ndp_close;

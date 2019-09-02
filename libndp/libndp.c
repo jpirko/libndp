@@ -318,11 +318,6 @@ static void ndp_msg_addrto_adjust_all_routers(struct in6_addr *addr)
 static void ndp_msg_addrto_adjust_solicit_multi(struct in6_addr *addr,
 						struct in6_addr *target)
 {
-	struct in6_addr any = IN6ADDR_ANY_INIT;
-
-	/* Don't set addr to target if target is default IN6ADDR_ANY_INIT */
-	if (!memcmp(target, &any, sizeof(any)))
-		return;
 	addr->s6_addr32[0] = htonl(0xFF020000);
 	addr->s6_addr32[1] = 0;
 	addr->s6_addr32[2] = htonl(0x1);
@@ -701,16 +696,40 @@ void ndp_msg_ifindex_set(struct ndp_msg *msg, uint32_t ifindex)
 }
 
 /**
+ * ndp_msg_dest_set:
+ * @msg: message structure
+ * @dest: ns,na dest
+ *
+ * Set dest address in IPv6 header for NS and NA.
+ **/
+NDP_EXPORT
+void ndp_msg_dest_set(struct ndp_msg *msg, struct in6_addr *dest)
+{
+	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+	switch (msg_type) {
+		case NDP_MSG_NS:
+			/* fall through */
+		case NDP_MSG_NA:
+			msg->addrto = *dest;
+			/* fall through */
+		default:
+			break;
+	}
+}
+
+/**
  * ndp_msg_target_set:
  * @msg: message structure
  * @target: ns,na target
  *
- * Set target address for NS and NA.
+ * Set target address in ICMPv6 header for NS and NA.
  **/
 NDP_EXPORT
 void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
 {
+	struct in6_addr any = IN6ADDR_ANY_INIT;
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
+
 	switch (msg_type) {
 		case NDP_MSG_NS:
 			((struct ndp_msgns*)&msg->nd_msg)->ns->nd_ns_target = *target;
@@ -720,11 +739,14 @@ void ndp_msg_target_set(struct ndp_msg *msg, struct in6_addr *target)
 			 * node seeks to verify the reachability of a
 			 * neighbor.
 			 *
-			 * In this case we don't know if we have a cache of
-			 * target, so we use multicast to resolve the target
-			 * address.
+			 * In this case we need to update the dest address in
+			 * IPv6 header when
+			 * a) IPv6 dest address is not set
+			 * b) ICMPv6 target address is supplied
 			 * */
-			ndp_msg_addrto_adjust_solicit_multi(&msg->addrto, target);
+			if (!memcmp(&msg->addrto, &any, sizeof(any)) &&
+			    memcmp(target, &any, sizeof(any)))
+				ndp_msg_addrto_adjust_solicit_multi(&msg->addrto, target);
 			break;
 		case NDP_MSG_NA:
 			((struct ndp_msgna*)&msg->nd_msg)->na->nd_na_target = *target;
