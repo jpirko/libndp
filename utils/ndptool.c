@@ -416,7 +416,8 @@ int main(int argc, char **argv)
 		switch(opt) {
 		case 'h':
 			print_help(argv0);
-			return EXIT_SUCCESS;
+			res = EXIT_SUCCESS;
+			goto errout;
 		case 'v':
 			g_verbosity++;
 			break;
@@ -442,11 +443,11 @@ int main(int argc, char **argv)
 		case '?':
 			pr_err("unknown option.\n");
 			print_help(argv0);
-			return EXIT_FAILURE;
+			goto errout;
 		default:
 			pr_err("unknown option \"%c\".\n", opt);
 			print_help(argv0);
-			return EXIT_FAILURE;
+			goto errout;
 		}
 	}
 
@@ -530,5 +531,9 @@ int main(int argc, char **argv)
 ndp_close:
 	ndp_close(ndp);
 errout:
+	free(msgtypestr);
+	free(ifname);
+	free(daddr);
+	free(taddr);
 	return res;
 }
