@@ -1613,7 +1613,7 @@ uint32_t ndp_msg_opt_mtu(struct ndp_msg *msg, int offset)
 NDP_EXPORT
 struct in6_addr *ndp_msg_opt_route_prefix(struct ndp_msg *msg, int offset)
 {
-	static struct in6_addr prefix;
+	static NDP_THREAD struct in6_addr prefix;
 	struct __nd_opt_route_info *ri =
 			ndp_msg_payload_opts_offset(msg, offset);
 
@@ -1719,7 +1719,7 @@ NDP_EXPORT
 struct in6_addr *ndp_msg_opt_rdnss_addr(struct ndp_msg *msg, int offset,
 					int addr_index)
 {
-	static struct in6_addr addr;
+	static NDP_THREAD struct in6_addr addr;
 	struct __nd_opt_rdnss *rdnss =
 			ndp_msg_payload_opts_offset(msg, offset);
 	size_t len = rdnss->nd_opt_rdnss_len << 3; /* convert to bytes */
@@ -1769,7 +1769,7 @@ char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
 			       int domain_index)
 {
 	int i;
-	static char buf[256];
+	static NDP_THREAD char buf[256];
 	struct __nd_opt_dnssl *dnssl =
 			ndp_msg_payload_opts_offset(msg, offset);
 	size_t len = dnssl->nd_opt_dnssl_len << 3; /* convert to bytes */

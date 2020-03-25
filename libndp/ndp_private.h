@@ -27,6 +27,7 @@
 #include "list.h"
 
 #define NDP_EXPORT __attribute__ ((visibility("default")))
+#define NDP_THREAD __thread
 
 /**
  * SECTION: ndp
