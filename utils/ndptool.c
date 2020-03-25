@@ -302,7 +302,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 				pr_out("%s", domain);
 			}
 			pr_out(", lifetime: ");
-			pr_out_lft(ndp_msg_opt_rdnss_lifetime(msg, offset));
+			pr_out_lft(ndp_msg_opt_dnssl_lifetime(msg, offset));
 			pr_out("\n");
 		}
 	} else if (msg_type == NDP_MSG_NS) {
