@@ -278,7 +278,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			pr_out("\n");
 		}
 		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_RDNSS) {
-			static struct in6_addr *addr;
+			struct in6_addr *addr;
 			int addr_index;
 
 			pr_out("  Recursive DNS Servers: ");
