@@ -145,11 +145,9 @@ static void print_help(const char *argv0) {
             argv0);
 }
 
-static const char *str_in6_addr(struct in6_addr *addr)
+static const char *str_in6_addr(struct in6_addr *addr, char buf[static INET6_ADDRSTRLEN])
 {
-	static char buf[INET6_ADDRSTRLEN];
-
-	return inet_ntop(AF_INET6, addr, buf, sizeof(buf));
+	return inet_ntop(AF_INET6, addr, buf, INET6_ADDRSTRLEN);
 }
 
 static void pr_out_hwaddr(unsigned char *hwaddr, size_t len)
@@ -189,6 +187,7 @@ static void pr_out_lft(uint32_t lifetime)
 
 static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 {
+	char buf[INET6_ADDRSTRLEN];
 	char ifname[IF_NAMESIZE];
 	enum ndp_msg_type msg_type = ndp_msg_type(msg);
 	int offset;
@@ -196,7 +195,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 	if_indextoname(ndp_msg_ifindex(msg), ifname);
 	pr_out("NDP payload len %zu, from addr: %s, iface: %s\n",
 	       ndp_msg_payload_len(msg),
-	       str_in6_addr(ndp_msg_addrto(msg)), ifname);
+	       str_in6_addr(ndp_msg_addrto(msg), buf), ifname);
 	if (msg_type == NDP_MSG_RS) {
 		pr_out("  Type: RS\n");
 	} else if (msg_type == NDP_MSG_RA) {
@@ -245,7 +244,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			valid_time = ndp_msg_opt_prefix_valid_time(msg, offset);
 			preferred_time = ndp_msg_opt_prefix_preferred_time(msg, offset);
 			pr_out("  Prefix: %s/%u",
-			       str_in6_addr(ndp_msg_opt_prefix(msg, offset)),
+			       str_in6_addr(ndp_msg_opt_prefix(msg, offset), buf),
 			       ndp_msg_opt_prefix_len(msg, offset));
 			pr_out(", valid_time: ");
 			if (valid_time == (uint32_t) -1)
@@ -269,7 +268,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			pr_out("  MTU: %u\n", ndp_msg_opt_mtu(msg, offset));
 		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_ROUTE) {
 			pr_out("  Route: %s/%u",
-			       str_in6_addr(ndp_msg_opt_route_prefix(msg, offset)),
+			       str_in6_addr(ndp_msg_opt_route_prefix(msg, offset), buf),
 			       ndp_msg_opt_route_prefix_len(msg, offset));
 			pr_out(", lifetime: ");
 			pr_out_lft(ndp_msg_opt_route_lifetime(msg, offset));
@@ -285,7 +284,7 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			ndp_msg_opt_rdnss_for_each_addr(addr, addr_index, msg, offset) {
 				if (addr_index != 0)
 					pr_out(", ");
-				pr_out("%s", str_in6_addr(addr));
+				pr_out("%s", str_in6_addr(addr, buf));
 			}
 			pr_out(", lifetime: ");
 			pr_out_lft(ndp_msg_opt_rdnss_lifetime(msg, offset));
