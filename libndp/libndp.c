@@ -221,11 +221,9 @@ resend:
 	return 0;
 }
 
-static const char *str_in6_addr(struct in6_addr *addr)
+static const char *str_in6_addr(struct in6_addr *addr, char buf[static INET6_ADDRSTRLEN])
 {
-	static char buf[INET6_ADDRSTRLEN];
-
-	return inet_ntop(AF_INET6, addr, buf, sizeof(buf));
+	return inet_ntop(AF_INET6, addr, buf, INET6_ADDRSTRLEN);
 }
 
 
@@ -1820,6 +1818,7 @@ static int ndp_sock_recv(struct ndp *ndp)
 	enum ndp_msg_type msg_type;
 	size_t len;
 	int err;
+	char buf[INET6_ADDRSTRLEN];
 
 	msg = ndp_msg_alloc();
 	if (!msg)
@@ -1833,7 +1832,7 @@ static int ndp_sock_recv(struct ndp *ndp)
 		goto free_msg;
 	}
 	dbg(ndp, "rcvd from: %s, ifindex: %u, hoplimit: %d",
-		 str_in6_addr(&msg->addrto), msg->ifindex, msg->hoplimit);
+		 str_in6_addr(&msg->addrto, buf), msg->ifindex, msg->hoplimit);
 
 	if (msg->hoplimit != 255) {
 		warn(ndp, "ignoring packet with bad hop limit (%d)", msg->hoplimit);
