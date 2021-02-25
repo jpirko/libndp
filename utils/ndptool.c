@@ -28,7 +28,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ndp.h>
-#include <sys/select.h>
+#include <poll.h>
 
 enum verbosity_level {
 	VERB1,
@@ -59,13 +59,10 @@ static void empty_signal_handler(int signal)
 
 static int run_main_loop(struct ndp *ndp)
 {
-	fd_set rfds;
-	fd_set rfds_tmp;
-	int fdmax;
+	struct pollfd pfd;
 	int ret;
 	struct sigaction siginfo;
 	sigset_t mask;
-	int ndp_fd;
 	int err = 0;
 
 	sigemptyset(&siginfo.sa_mask);
@@ -100,23 +97,22 @@ static int run_main_loop(struct ndp *ndp)
 
 	sigemptyset(&mask);
 
-	FD_ZERO(&rfds);
-	ndp_fd = ndp_get_eventfd(ndp);
-	FD_SET(ndp_fd, &rfds);
-	fdmax = ndp_fd + 1;
+	pfd = (struct pollfd) {
+		.fd = ndp_get_eventfd(ndp),
+		.events = POLLIN,
+	};
 
 	for (;;) {
-		rfds_tmp = rfds;
-		ret = pselect(fdmax, &rfds_tmp, NULL, NULL, NULL, &mask);
+		ret = ppoll(&pfd, 1, NULL, &mask);
 		if (ret == -1) {
 			if (errno == EINTR) {
 				goto out;
 			}
-			pr_err("Select failed\n");
+			pr_err("Poll failed\n");
 			err = -errno;
 			goto out;
 		}
-		if (FD_ISSET(ndp_fd, &rfds_tmp)) {
+		if (pfd.revents & POLLIN) {
 			err = ndp_call_eventfd_handler(ndp);
 			if (err) {
 				pr_err("ndp eventfd handler call failed\n");

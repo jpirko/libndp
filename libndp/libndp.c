@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <sys/socket.h>
-#include <sys/select.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
@@ -2107,22 +2107,20 @@ int ndp_call_eventfd_handler(struct ndp *ndp)
 NDP_EXPORT
 int ndp_callall_eventfd_handler(struct ndp *ndp)
 {
-	fd_set rfds;
-	int fdmax;
-	struct timeval tv;
-	int fd = ndp_get_eventfd(ndp);
+	struct pollfd pfd;
 	int ret;
 	int err;
 
-	memset(&tv, 0, sizeof(tv));
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	fdmax = fd + 1;
+	pfd = (struct pollfd) {
+		.fd = ndp_get_eventfd(ndp),
+		.events = POLLIN,
+	};
+
 	while (true) {
-		ret = select(fdmax, &rfds, NULL, NULL, &tv);
+		ret = poll(&pfd, 1, 0);
 		if (ret == -1)
 			return -errno;
-		if (!FD_ISSET(fd, &rfds))
+		if (!(pfd.revents & POLLIN))
 			return 0;
 		err = ndp_call_eventfd_handler(ndp);
 		if (err)
