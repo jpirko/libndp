@@ -31,7 +31,7 @@ $ git format-patch origin -o /tmp --subject-prefix "patch libndp"
 
 7) Use git send-email to send the patch*.
 $ git send-email /tmp/0001-somepatch.patch \
-  --to=libndp-list@redhat.com --cc=jiri@resnulli.us
+  --to=libndp@lists.fedorahosted.org --cc=jiri@resnulli.us
 
 And you are done :)
 
