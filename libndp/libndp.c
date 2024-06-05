@@ -1231,6 +1231,17 @@ static bool ndp_msg_opt_route_check_valid(void *opt_data)
 	 */
 	if (((ri->nd_opt_ri_prf_reserved >> 3) & 3) == 2)
 		return false;
+
+	/* The Length field is 1, 2, or 3 depending on the Prefix Length.
+	 * If Prefix Length is greater than 64, then Length must be 3.
+	 * If Prefix Length is greater than 0, then Length must be 2 or 3.
+	 * If Prefix Length is zero, then Length must be 1, 2, or 3.
+	 */
+	if (ri->nd_opt_ri_len > 3 ||
+	    (ri->nd_opt_ri_prefix_len > 64 && ri->nd_opt_ri_len != 3) ||
+	    (ri->nd_opt_ri_prefix_len > 0 && ri->nd_opt_ri_len == 1))
+		return false;
+
 	return true;
 }
 
