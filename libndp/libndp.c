@@ -200,26 +200,31 @@ static int myrecvfrom6(int sockfd, void *buf, size_t *buflen, int flags,
 }
 
 static int mysendto6(int sockfd, void *buf, size_t buflen, int flags,
-		     struct in6_addr *addr, uint32_t ifindex)
+                     struct in6_addr *addr, uint32_t ifindex)
 {
-	struct sockaddr_in6 sin6;
-	ssize_t ret;
+        struct sockaddr_in6 sin6;
+        ssize_t ret;
+        memset(&sin6, 0, sizeof(sin6));
 
-	memset(&sin6, 0, sizeof(sin6));
-	memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
-	sin6.sin6_scope_id = ifindex;
+        memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
+
+        sin6.sin6_scope_id = ifindex;
+
 resend:
-	ret = sendto(sockfd, buf, buflen, flags, &sin6, sizeof(sin6));
-	if (ret == -1) {
-		switch(errno) {
-		case EINTR:
-			goto resend;
-		default:
-			return -errno;
-		}
-	}
-	return 0;
+        ret = sendto(sockfd, buf, buflen, flags, (const struct sockaddr *)&sin6, sizeof(sin6));
+
+        if (ret == -1) {
+                switch(errno) {
+                case EINTR:
+                        goto resend;
+                default:
+                        return -errno;
+                }
+        }
+
+        return 0;
 }
+
 
 static const char *str_in6_addr(struct in6_addr *addr, char buf[static INET6_ADDRSTRLEN])
 {
