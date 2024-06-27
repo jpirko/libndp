@@ -300,6 +300,21 @@ static int msgrcv_handler_func(struct ndp *ndp, struct ndp_msg *msg, void *priv)
 			pr_out_lft(ndp_msg_opt_dnssl_lifetime(msg, offset));
 			pr_out("\n");
 		}
+		ndp_msg_opt_for_each_offset(offset, msg, NDP_MSG_OPT_PREF64) {
+			struct in6_addr *prefix;
+			uint16_t lft;
+			uint8_t plen;
+
+			pr_out("  NAT64 Prefix: ");
+
+			prefix = ndp_msg_opt_pref64_prefix(msg, offset);
+			plen = ndp_msg_opt_pref64_prefix_length(msg, offset);
+			lft = ndp_msg_opt_pref64_lifetime(msg, offset);
+
+			pr_out("%s/%u", str_in6_addr(prefix, buf), plen);
+			pr_out(", lifetime: %us", lft);
+			pr_out("\n");
+		}
 	} else if (msg_type == NDP_MSG_NS) {
 		pr_out("  Type: NS\n");
 	} else if (msg_type == NDP_MSG_NA) {
