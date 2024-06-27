@@ -1245,6 +1245,26 @@ static bool ndp_msg_opt_route_check_valid(void *opt_data)
 	return true;
 }
 
+static bool ndp_msg_opt_pref64_check_valid(void *opt_data)
+{
+	struct __nd_opt_pref64 *pref64 = opt_data;
+	uint16_t plc;
+
+	/* rfc8781: the receiver MUST ignore the PREF64 option if the
+	 * Length field value is not 2 */
+	if (pref64->nd_opt_pref64_len != 2)
+		return false;
+
+	/* The PLC field values 0, 1, 2, 3, 4, and 5 indicate the NAT64
+	 * prefix length. The receiver MUST ignore the PREF64 option if the
+	 * Prefix Length Code field is not set to one of those values.*/
+	plc = ntohs(pref64->nd_opt_pref64_lft_plc) & ND_OPT_PREF64_PLC_MASK;
+	if (plc > 5)
+		return false;
+
+	return true;
+}
+
 static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 {
 	[NDP_MSG_OPT_SLLADDR] = {
@@ -1276,6 +1296,11 @@ static struct ndp_msg_opt_type_info ndp_msg_opt_type_info_list[] =
 	[NDP_MSG_OPT_DNSSL] = {
 		.raw_type = __ND_OPT_DNSSL,
 		.raw_struct_size = sizeof(struct __nd_opt_dnssl),
+	},
+	[NDP_MSG_OPT_PREF64] = {
+		.raw_type = __ND_OPT_PREF64,
+		.raw_struct_size = sizeof(struct __nd_opt_pref64),
+		.check_valid = ndp_msg_opt_pref64_check_valid,
 	},
 };
 
@@ -1819,6 +1844,86 @@ char *ndp_msg_opt_dnssl_domain(struct ndp_msg *msg, int offset,
 			return buf;
 	}
 	return NULL;
+}
+
+/**
+ * ndp_msg_opt_pref64_lifetime:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get the NAT64 prefix lifetime.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: the NAT64 prefix lifetime in seconds.
+ **/
+NDP_EXPORT
+uint16_t ndp_msg_opt_pref64_lifetime(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_pref64 *pref64 =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ntohs(pref64->nd_opt_pref64_lft_plc) & ND_OPT_PREF64_LFT_MASK;
+}
+
+static uint8_t ndp_msg_opt_pref64_plen(struct __nd_opt_pref64 *pref64)
+{
+	uint8_t plc;
+
+	plc = ntohs(pref64->nd_opt_pref64_lft_plc) & ND_OPT_PREF64_PLC_MASK;
+
+	/* The PLC field values 0, 1, 2, 3, 4, and 5 indicate the NAT64
+	 * prefix length of 96, 64, 56, 48, 40, and 32 bits, respectively. */
+	if (plc == 0)
+		return 96;
+
+	return 72 - plc * 8;
+}
+
+/**
+ * ndp_msg_opt_pref64_prefix_length:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get the NAT64 prefix length.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: the NAT64 prefix length (32, 40, 48, 56, 64 or 96).
+ **/
+NDP_EXPORT
+uint8_t ndp_msg_opt_pref64_prefix_length(struct ndp_msg *msg, int offset)
+{
+	struct __nd_opt_pref64 *pref64 =
+			ndp_msg_payload_opts_offset(msg, offset);
+
+	return ndp_msg_opt_pref64_plen(pref64);
+}
+
+/**
+ * ndp_msg_opt_pref64_prefix:
+ * @msg: message structure
+ * @offset: in-message offset
+ *
+ * Get the NAT64 prefix.
+ * User should use this function only inside ndp_msg_opt_for_each_offset()
+ * macro loop.
+ *
+ * Returns: the NAT64 prefix.
+ **/
+NDP_EXPORT
+struct in6_addr *ndp_msg_opt_pref64_prefix(struct ndp_msg *msg, int offset)
+{
+	static NDP_THREAD struct in6_addr addr;
+	struct __nd_opt_pref64 *pref64 =
+			ndp_msg_payload_opts_offset(msg, offset);
+	uint8_t plen;
+
+	plen = ndp_msg_opt_pref64_plen(pref64);
+	memset(&addr, 0, sizeof(addr));
+	memcpy(&addr, pref64->nd_opt_pref64_prefix, plen / 8);
+
+	return &addr;
 }
 
 static int ndp_call_handlers(struct ndp *ndp, struct ndp_msg *msg);

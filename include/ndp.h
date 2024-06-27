@@ -124,6 +124,7 @@ enum ndp_msg_opt_type {
 	NDP_MSG_OPT_ROUTE, /* Route Information */
 	NDP_MSG_OPT_RDNSS, /* Recursive DNS Server */
 	NDP_MSG_OPT_DNSSL, /* DNS Search List */
+	NDP_MSG_OPT_PREF64, /* NAT64 prefix */
 };
 
 int ndp_msg_next_opt_offset(struct ndp_msg *msg, int offset,
@@ -158,6 +159,10 @@ ndp_msg_opt_route_preference(struct ndp_msg *msg, int offset);
 uint32_t ndp_msg_opt_rdnss_lifetime(struct ndp_msg *msg, int offset);
 struct in6_addr *ndp_msg_opt_rdnss_addr(struct ndp_msg *msg, int offset,
 					int addr_index);
+
+uint16_t ndp_msg_opt_pref64_lifetime(struct ndp_msg *msg, int offset);
+uint8_t ndp_msg_opt_pref64_prefix_length(struct ndp_msg *msg, int offset);
+struct in6_addr *ndp_msg_opt_pref64_prefix(struct ndp_msg *msg, int offset);
 
 #define ndp_msg_opt_rdnss_for_each_addr(addr, addr_index, msg, offset)	\
 	for (addr_index = 0,						\

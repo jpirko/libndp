@@ -86,6 +86,7 @@ ndp_log_null(struct ndp *ndp, const char *format, ...) {}
 #define __ND_OPT_ROUTE_INFO 24 /* rfc4191 */
 #define __ND_OPT_RDNSS 25 /* rfc6106 */
 #define __ND_OPT_DNSSL 31 /* rfc6106 */
+#define __ND_OPT_PREF64 38 /* rfc8781 */
 
 struct __nd_opt_route_info { /* route information */
 	uint8_t		nd_opt_ri_type;
@@ -110,6 +111,17 @@ struct __nd_opt_dnssl { /* DNS Search List */
 	uint16_t	nd_opt_dnssl_reserved;
 	uint32_t	nd_opt_dnssl_lifetime;
 	char		nd_opt_dnssl_domains[0];
+};
+
+#define ND_OPT_PREF64_PLC_MASK 0x7
+#define ND_OPT_PREF64_LFT_SHIFT 3
+#define ND_OPT_PREF64_LFT_MASK (0x1FFF << ND_OPT_PREF64_LFT_SHIFT)
+
+struct __nd_opt_pref64 { /* NAT64 prefix */
+	uint8_t		nd_opt_pref64_type;
+	uint8_t		nd_opt_pref64_len;
+	uint16_t	nd_opt_pref64_lft_plc;
+	uint8_t		nd_opt_pref64_prefix[12];
 };
 
 
