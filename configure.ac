@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([libndp], [1.8], [jiri@resnulli.us])
+AC_INIT([libndp], [1.9], [jiri@resnulli.us])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
@@ -22,9 +22,9 @@ AM_PROG_AR
 # 6. If any interfaces have been removed or changed since the last public
 #    release, then set age to 0.
 
-AC_SUBST(LIBNDP_CURRENT, 2)
+AC_SUBST(LIBNDP_CURRENT, 3)
 AC_SUBST(LIBNDP_REVISION, 0)
-AC_SUBST(LIBNDP_AGE, 2)
+AC_SUBST(LIBNDP_AGE, 3)
 
 CFLAGS="$CFLAGS -Wall"
 
