@@ -209,7 +209,7 @@ static int mysendto6(int sockfd, void *buf, size_t buflen, int flags,
 	memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
 	sin6.sin6_scope_id = ifindex;
 resend:
-	ret = sendto(sockfd, buf, buflen, flags, &sin6, sizeof(sin6));
+	ret = sendto(sockfd, buf, buflen, flags, (struct sockaddr*)&sin6, sizeof(sin6));
 	if (ret == -1) {
 		switch(errno) {
 		case EINTR:
