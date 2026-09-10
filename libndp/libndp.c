@@ -206,6 +206,7 @@ static int mysendto6(int sockfd, void *buf, size_t buflen, int flags,
 	ssize_t ret;
 
 	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
 	memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
 	sin6.sin6_scope_id = ifindex;
 resend:
